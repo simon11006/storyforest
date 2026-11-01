@@ -4,6 +4,8 @@ import {LibraryStore,assertSlot} from './src/store.js';
 assert.equal(new Set(Array.from({length:30},(_,i)=>JSON.stringify(slotPosition(i+1)))).size,30);
 assertSlot(30);assert.throws(()=>assertSlot(31));assert.throws(()=>assertSlot(0));
 assert.equal(canStand(0,20),true);assert.equal(canStand(10,0),false);assert.equal(canStand(4.3,11),false);
+for(const z of [19.8,6.3,-7.2]){assert.equal(canStand(6.7,z),false);assert.equal(canStand(0,z),true);}
+assert.equal(canStand(-7.2,13.5),false);
 const s=new LibraryStore();s.memory={classes:new Map(),books:new Map()};
 await s.addBook('class-a',{slot:1,title:'책',author:'작가'});
 await s.addBook('class-b',{slot:1,title:'다른 학급 책',author:'작가'});
