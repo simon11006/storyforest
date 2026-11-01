@@ -1,29 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
-  match /databases/{database}/documents {
-    function verified() { return request.auth != null && request.auth.token.email_verified == true; }
-    function member(school) { return verified() && get(/databases/$(database)/documents/schools/$(school)/members/$(request.auth.token.email)).data.role in ['student','teacher']; }
-    function teacher(school) { return member(school) && get(/databases/$(database)/documents/schools/$(school)/members/$(request.auth.token.email)).data.role == 'teacher'; }
-    match /schools/{school}/members/{email} {
-      allow get: if verified() && request.auth.token.email == email;
-      allow create, update: if teacher(school) && request.resource.data.keys().hasOnly(['role']) && request.resource.data.role in ['teacher','student'];
-    }
-    match /schools/{school}/classes/{classId} {
-      allow read: if member(school);
-      allow create, update: if teacher(school) && request.resource.data.keys().hasOnly(['name','createdAt']) && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40 && request.resource.data.createdAt is number;
-      match /books/{slot} {
-        allow read: if member(school);
-        allow create: if teacher(school) && slot.matches('^([1-9]|[12][0-9]|30)$')
-          && request.resource.data.keys().hasOnly(['slot','title','author','pages','pdfPath','coverPath','bytes','createdAt'])
-          && request.resource.data.slot is int && request.resource.data.slot == int(slot)
-          && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 100
-          && request.resource.data.author is string && request.resource.data.author.size() > 0 && request.resource.data.author.size() <= 50
-          && request.resource.data.pages is int && request.resource.data.pages > 0
-          && request.resource.data.bytes is int && request.resource.data.bytes <= 104857600
-          && request.resource.data.pdfPath.matches('schools/' + school + '/classes/' + classId + '/[^/]+/book.pdf')
-          && request.resource.data.coverPath.matches('schools/' + school + '/classes/' + classId + '/[^/]+/cover.jpg');
-        allow delete: if teacher(school);
-      }
-    }
+ match /databases/{database}/documents {
+  function signed(){return request.auth != null;}
+  function role(s){return signed() && request.auth.token.email_verified == true ? get(/databases/$(database)/documents/schools/$(s)/members/$(request.auth.token.email)).data.role : '';}
+  function admin(s){return role(s)=='admin';}
+  function member(s){return role(s) in ['admin','teacher','student'];}
+  function manages(s,c){return admin(s) || (role(s)=='teacher' && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.teacherEmail==request.auth.token.email);}
+  function validClass(){return request.resource.data.keys().hasOnly(['name','createdAt','teacherEmail','accepting']) && request.resource.data.name is string && request.resource.data.name.size()>0 && request.resource.data.name.size()<=40 && request.resource.data.createdAt is number && request.resource.data.teacherEmail is string && request.resource.data.accepting is bool;}
+  function validBook(d){return d.title is string && d.title.size()>0 && d.title.size()<=100 && d.author is string && d.author.size()>0 && d.author.size()<=50 && d.pages is int && d.pages>0 && d.bytes is int && d.bytes>0 && d.bytes<=104857600 && d.createdAt is number;}
+  match /schools/{s}/members/{email}{
+   allow get: if admin(s) || (signed() && request.auth.token.email_verified==true && request.auth.token.email==email);
+   allow list: if admin(s);
+   allow create,update: if admin(s) && email!='endeavor1006@naver.com' && request.resource.data.keys().hasOnly(['role']) && request.resource.data.role in ['teacher','student'];
+   allow delete: if admin(s) && email!='endeavor1006@naver.com';
   }
+  match /schools/{s}/classes/{c}{
+   allow read: if signed();
+   allow create: if admin(s) && validClass();
+   allow update: if validClass() && (admin(s) || (manages(s,c) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','accepting'])));
+   allow delete: if admin(s);
+   match /books/{slot}{
+    allow read: if member(s);
+    allow create: if manages(s,c) && slot.matches('^([1-9]|[12][0-9]|30)$') && request.resource.data.slot==int(slot) && validBook(request.resource.data)
+     && request.resource.data.keys().hasOnly(['slot','title','author','pages','pdfPath','coverPath','bytes','createdAt'])
+     && request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/cover.jpg');
+    allow delete: if manages(s,c);
+   }
+   match /submissions/{uid}{
+    allow get: if manages(s,c) || (signed() && request.auth.uid==uid);
+    allow list: if manages(s,c);
+    allow create: if signed() && request.auth.uid==uid && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.accepting==true
+     && request.resource.data.keys().hasOnly(['title','author','pages','bytes','createdAt','pdfPath','coverPath']) && validBook(request.resource.data)
+     && request.resource.data.pdfPath=='schools/'+s+'/incoming/'+c+'/'+uid+'/book.pdf' && request.resource.data.coverPath=='schools/'+s+'/incoming/'+c+'/'+uid+'/cover.jpg';
+    allow delete: if manages(s,c);
+   }
+  }
+ }
 }

@@ -1,0 +1,6 @@
+{
+  "hosting": {
+    "site": "fairytale-94bbd",
+    "redirects": [{"source": "**", "destination": "https://fairytale2026.web.app", "type": 302}]
+  }
+}

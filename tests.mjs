@@ -12,3 +12,5 @@ await s.addBook('class-b',{slot:1,title:'다른 학급 책',author:'작가'});
 await assert.rejects(()=>s.addBook('class-a',{slot:1,title:'덮어쓰기',author:'작가'}));
 assert.equal((await s.books('class-a')).length,1);assert.equal((await s.books('class-b')).length,1);
 console.log('PASS 30 unique positions, room collisions, slot capacity, duplicate protection, classroom isolation');
+
+s.mode='firebase';s.role='teacher';s.user={email:'teacher@example.com'};assert.equal(s.manages({teacherEmail:'teacher@example.com'}),true);assert.equal(s.manages({teacherEmail:'other@example.com'}),false);s.role='student';assert.equal(s.manages({teacherEmail:'teacher@example.com'}),false);s.isAdmin=true;assert.equal(s.manages({teacherEmail:'other@example.com'}),true);console.log('PASS class ownership and super administrator UI permissions');
