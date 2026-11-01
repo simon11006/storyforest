@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {buildReaders} from './readers.js';
 
 // Repeated architectural parts share materials and geometry to keep the world light.
 export function buildForest(g) {
@@ -49,6 +50,7 @@ export function buildForest(g) {
   box(.75,.12,.75,x-.9,.8,z,mat('#48786b'));
   for(let i=0;i<3;i++){const b=box(.42,.075,.58,x+.95,.81+i*.08,z,mat(bookColors[i]));b.rotation.y=i*.2;}
  }
+ buildReaders(g);
  // Classroom themes populate these existing planter footprints with distinct plants.
  // Dense leaf clusters above the display walls: shared instancing, not hundreds of draw calls.
  const leaves=new THREE.InstancedMesh(new THREE.SphereGeometry(1,7,5),mat('#497554'),240);

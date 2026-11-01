@@ -1,3 +1,4 @@
+import {youtubeLink,videoAction} from './src/video.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
@@ -27,7 +28,7 @@ class TestReader{}
 const source=fs.readFileSync(new URL('./src/main.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 try{
- await new AsyncFunction('LibraryStore','Gallery','Reader','inspectPDF','setupManagement','classCapacity','availableSlots','exhibitedBooks',source)(TestStore,TestGallery,TestReader,()=>{},setupManagement,classCapacity,availableSlots,exhibitedBooks);
+ await new AsyncFunction('LibraryStore','Gallery','Reader','inspectPDF','setupManagement','classCapacity','availableSlots','exhibitedBooks','youtubeLink','videoAction',source)(TestStore,TestGallery,TestReader,()=>{},setupManagement,classCapacity,availableSlots,exhibitedBooks,youtubeLink,videoAction);
  const $=s=>document.querySelector(s),tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal($('#manager').open,true,'an authenticated manager lands on management');assert.equal($('#managedClassSelect').value,'existing');assert.equal($('#bookCount').textContent,'30');
  $('#manageBtn').click();await tick();
