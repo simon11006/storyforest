@@ -46,7 +46,7 @@ export async function videoThumbnailCover(book){
    try{
     const img=await new Promise((resolve,reject)=>{const image=new Image();image.crossOrigin='anonymous';const timer=setTimeout(()=>reject(Error('Thumbnail timeout')),4000);image.onload=()=>{clearTimeout(timer);image.naturalWidth>120?resolve(image):reject(Error('Missing thumbnail'));};image.onerror=()=>{clearTimeout(timer);reject(Error('Thumbnail unavailable'));};image.src='https://i.ytimg.com/vi/'+id+'/'+quality+'.jpg';});
     const canvas=document.createElement('canvas');canvas.width=420;canvas.height=600;const c=canvas.getContext('2d');c.fillStyle='#244b43';c.fillRect(0,0,420,600);c.strokeStyle='#d9bc7d';c.lineWidth=3;c.strokeRect(12,12,396,576);
-    const scale=Math.min(380/img.naturalWidth,470/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;c.drawImage(img,(420-w)/2,24+(470-h)/2,w,h);
+    const scale=Math.max(420/img.naturalWidth,600/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;c.drawImage(img,(420-w)/2,(600-h)/2,w,h);const shade=c.createLinearGradient(0,460,0,600);shade.addColorStop(0,'rgba(0,0,0,0)');shade.addColorStop(1,'rgba(0,0,0,.85)');c.fillStyle=shade;c.fillRect(0,460,420,140);
     c.fillStyle='#fff4da';c.textAlign='center';c.font='bold 24px sans-serif';c.fillText('▶ 영상북',210,535,370);c.font='21px sans-serif';c.fillText(String(book.title||'영상북'),210,571,370);return canvas.toDataURL('image/jpeg',.9);
    }catch{}
   }
