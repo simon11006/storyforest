@@ -1,4 +1,4 @@
-import {youtubeLink,videoAction} from './src/video.js';
+import {youtubeLink,videoAction,prepareBook,openVideo} from './src/video.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
@@ -31,7 +31,7 @@ const originalFormData=globalThis.FormData,originalConfirm=globalThis.confirm;
 const dom=new JSDOM(html);globalThis.document=dom.window.document;globalThis.MutationObserver=dom.window.MutationObserver;globalThis.FormData=dom.window.FormData;let confirmation=true,confirmationText='';globalThis.confirm=text=>{confirmationText=text;return confirmation;};
 dom.window.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};dom.window.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
 try{
- await new AsyncFunction('LibraryStore','Gallery','Reader','inspectPDF','setupManagement','classCapacity','availableSlots','exhibitedBooks','youtubeLink','videoAction',source)(TestStore,TestGallery,TestReader,()=>{},setupManagement,classCapacity,availableSlots,exhibitedBooks,youtubeLink,videoAction);
+ await new AsyncFunction('LibraryStore','Gallery','Reader','inspectPDF','setupManagement','classCapacity','availableSlots','exhibitedBooks','youtubeLink','videoAction','prepareBook','openVideo',source)(TestStore,TestGallery,TestReader,()=>{},setupManagement,classCapacity,availableSlots,exhibitedBooks,youtubeLink,videoAction,prepareBook,openVideo);
  const $=s=>document.querySelector(s),tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal($('#entryLobby').hidden,false);assert.equal($('#entryLobby').tagName,'DIALOG');assert.equal($('#entryLobby').open,true);assert.equal($('#lobbyEmpty').hidden,false);assert.equal($('#lobbyClassSelect').options.length,1);assert.equal($('#lobbyClassSelect').options[0].textContent,'학급 선택하기');assert.equal($('#lobbyClassSelect').disabled,true);assert.equal($('#lobbyStudentBtn').disabled,true);assert.equal($('#studentBtn').disabled,true);
  $('#lobbyTeacherBtn').click();assert.equal($('#manager').open,true);assert.equal($('#teacherCreateHint').hidden,false);

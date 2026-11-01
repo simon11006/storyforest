@@ -4,7 +4,7 @@ import {JSDOM} from 'jsdom';
 import {setupManagement} from './src/management.js';
 const dom=new JSDOM(fs.readFileSync(new URL('./src/index.html',import.meta.url),'utf8'));
 globalThis.document=dom.window.document;globalThis.MutationObserver=dom.window.MutationObserver;
-const originalFormData=globalThis.FormData;globalThis.FormData=dom.window.FormData;
+const originalFormData=globalThis.FormData;globalThis.FormData=class extends dom.window.FormData{get(name){return name==='pdf'?{size:12}:super.get(name);}};
 const classes=[{id:'one',name:'4학년 1반',accepting:true},{id:'two',name:'4학년 2반',accepting:true},{id:'closed',name:'4학년 3반',accepting:false}];
 const $=s=>document.querySelector(s);let submittedTo,finishPDF;
 const store={isAdmin:false,manages:()=>false,submitBook:async c=>{submittedTo=c;return{published:false};}};

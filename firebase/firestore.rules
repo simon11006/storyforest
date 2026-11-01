@@ -8,7 +8,8 @@ service cloud.firestore {
   function capacity(s,c){return get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.get('capacity',30);}
   function deleting(s,c){return get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.get('deleting',false);}
   function validClass(){let d=request.resource.data;let limit=d.get('capacity',30);let removing=d.get('deleting',false);return d.keys().hasOnly(['name','createdAt','teacherEmail','accepting','autoPublish','capacity','deleting']) && d.name is string && d.name.size()>0 && d.name.size()<=40 && d.createdAt is number && d.teacherEmail is string && d.accepting is bool && d.autoPublish is bool && limit is int && limit>=1 && limit<=30 && removing is bool && (!removing || d.accepting==false);}
-  function validBook(d){return d.get('youtubeUrl','') is string && (d.get('youtubeUrl','')=='' || d.youtubeUrl.matches('^https://www[.]youtube[.]com/watch[?]v=[A-Za-z0-9_-]{11}$')) && d.title is string && d.title.size()>0 && d.title.size()<=100 && d.author is string && d.author.size()>0 && d.author.size()<=50 && d.pages is int && d.pages>0 && d.bytes is int && d.bytes>0 && d.bytes<=104857600 && d.createdAt is number;}
+  function video(d){return d.get('kind','pdf')=='video';}
+  function validBook(d){return d.get('youtubeUrl','') is string && (d.get('youtubeUrl','')=='' || d.youtubeUrl.matches('^https://www[.]youtube[.]com/watch[?]v=[A-Za-z0-9_-]{11}$')) && d.title is string && d.title.size()>0 && d.title.size()<=100 && d.author is string && d.author.size()>0 && d.author.size()<=50 && d.createdAt is number && ((video(d) && d.youtubeUrl!='' && d.keys().hasOnly(['kind','slot','title','author','youtubeUrl','createdAt'])) || (d.get('kind','pdf')=='pdf' && d.pages is int && d.pages>0 && d.bytes is int && d.bytes>0 && d.bytes<=104857600));}
   match /schools/{s}/members/{email}{
    allow get: if admin(s) || (signed() && request.auth.token.email_verified==true && request.auth.token.email==email);
    allow list: if admin(s);
@@ -22,17 +23,17 @@ service cloud.firestore {
    allow delete: if manages(s,c) && resource.data.get('deleting',false)==true;
    match /books/{slot}{
     allow read: if true;
-    allow create: if !deleting(s,c) && (manages(s,c) || (signed() && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.autoPublish==true && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.accepting==true && request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/'+request.auth.uid+'_[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/'+request.auth.uid+'_[^/]+/cover.jpg'))) && slot.matches('^([1-9]|[12][0-9]|30)$') && int(slot)<=capacity(s,c) && request.resource.data.slot==int(slot) && validBook(request.resource.data)
-     && request.resource.data.keys().hasOnly(['slot','title','author','pages','pdfPath','coverPath','bytes','createdAt','youtubeUrl'])
-     && request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/cover.jpg');
+    allow create: if !deleting(s,c) && (manages(s,c) || (signed() && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.autoPublish==true && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.accepting==true && (video(request.resource.data) || (request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/'+request.auth.uid+'_[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/'+request.auth.uid+'_[^/]+/cover.jpg'))))) && slot.matches('^([1-9]|[12][0-9]|30)$') && int(slot)<=capacity(s,c) && request.resource.data.slot==int(slot) && validBook(request.resource.data)
+     && request.resource.data.keys().hasOnly(['slot','title','author','pages','pdfPath','coverPath','bytes','createdAt','youtubeUrl','kind'])
+     && (video(request.resource.data) || (request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/cover.jpg')));
     allow delete: if manages(s,c);
    }
    match /submissions/{uid}{
     allow get: if manages(s,c) || (signed() && request.auth.uid==uid);
     allow list: if manages(s,c);
     allow create: if !deleting(s,c) && signed() && request.auth.uid==uid && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.accepting==true
-     && request.resource.data.keys().hasOnly(['title','author','pages','bytes','createdAt','pdfPath','coverPath','youtubeUrl']) && validBook(request.resource.data)
-     && request.resource.data.pdfPath=='schools/'+s+'/incoming/'+c+'/'+uid+'/book.pdf' && request.resource.data.coverPath=='schools/'+s+'/incoming/'+c+'/'+uid+'/cover.jpg';
+     && request.resource.data.keys().hasOnly(['title','author','pages','bytes','createdAt','pdfPath','coverPath','youtubeUrl','kind']) && validBook(request.resource.data)
+     && (video(request.resource.data) || (request.resource.data.pdfPath=='schools/'+s+'/incoming/'+c+'/'+uid+'/book.pdf' && request.resource.data.coverPath=='schools/'+s+'/incoming/'+c+'/'+uid+'/cover.jpg'));
     allow delete: if manages(s,c);
    }
   }

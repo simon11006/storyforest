@@ -1,15 +1,17 @@
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
-import {youtubeLink,videoAction} from './src/video.js';
+import {youtubeLink,videoAction,prepareBook,openVideo} from './src/video.js';
 import {LibraryStore} from './src/store.js';
 const id='abcdefghijk',url='https://www.youtube.com/watch?v='+id;
 for(const input of ['https://youtu.be/'+id+'?si=share','https://youtube.com/watch?v='+id+'&t=10','https://m.youtube.com/shorts/'+id,'https://youtube.com/live/'+id])assert.equal(youtubeLink(input),url);
 for(const input of ['javascript:alert(1)','https://youtube.com.evil.test/watch?v='+id,'https://youtube.com/playlist?list=test','https://youtu.be/short','https://youtube.com@evil.test/watch?v='+id])assert.throws(()=>youtubeLink(input));
-assert.equal(youtubeLink(''),'');globalThis.document=new JSDOM('').window.document;
+assert.equal(youtubeLink(''),'');const dom=new JSDOM('');globalThis.document=dom.window.document;dom.window.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};dom.window.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');this.dispatchEvent(new dom.window.Event('close'));};
 assert.equal(videoAction({title:'PDF only'}),null);assert.equal(videoAction({youtubeUrl:'https://evil.test'}),null);
-const action=videoAction({title:'영상책',youtubeUrl:url});assert.equal(action.href,url);assert.equal(action.target,'_blank');assert.match(action.rel,/noopener/);
+const action=videoAction({title:'영상책',youtubeUrl:url});assert.equal(action.tagName,'BUTTON');action.click();assert.match(document.querySelector('#videoReader iframe').src,/youtube.com\/embed\/abcdefghijk/);document.querySelector('#videoReader button').click();assert.equal(document.querySelector('#videoReader iframe'),null,'close stops playback');
 const store=new LibraryStore();store.memory={classes:new Map(),books:new Map()};const c=await store.addClass('영상 학급',3);
 await store.addBook(c.id,{slot:1,title:'영상책',author:'작가',youtubeUrl:'https://youtu.be/'+id});assert.equal((await store.books(c.id))[0].youtubeUrl,url);
 await store.addBook(c.id,{slot:2,title:'PDF',author:'작가'});assert.equal((await store.books(c.id))[1].youtubeUrl,'');
 await assert.rejects(()=>store.addBook(c.id,{slot:3,title:'잘못된 링크',author:'작가',youtubeUrl:'https://evil.test'}));
 console.log('PASS optional YouTube link normalization, unsafe URL rejection, video actions and PDF compatibility');
+
+const standalone=await prepareBook(null,url,'영상만',()=>{throw Error('PDF must not be parsed');});assert.equal(standalone.kind,'video');assert.match(standalone.cover,/^data:image/);await store.addBook(c.id,{...standalone,slot:3,title:'영상만',author:'작가'});assert.equal((await store.books(c.id))[2].kind,'video');await store.removeBook(c.id,{slot:3});assert.equal((await store.books(c.id)).length,2);await assert.rejects(()=>prepareBook(null,'','빈 작품',()=>{}));let parsed=false;const paired=await prepareBook({size:10},url,'둘 다',async()=>{parsed=true;return{pages:2,data:new Uint8Array(1)};});assert.equal(parsed,true);assert.equal(paired.youtubeUrl,url);assert.equal(paired.kind,undefined);console.log('PASS video-only registration, PDF pairing, embedded playback and close cleanup');dom.window.close();
