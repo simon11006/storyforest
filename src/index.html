@@ -1,11 +1,10 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#263e36"><title>이야기숲 | 우리 반 이야기 미술관</title><meta name="description" content="학급마다 펼쳐지는 우리들의 이야기. 학생들이 만든 책을 1인칭으로 걸으며 만나는 3D 전시관."><link rel="preload" href="vendor/fonts/NanumBrushScript-Regular.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="style.css"></head><body class="choosing-class">
 <dialog id="entryLobby" class="entry-lobby" aria-labelledby="lobbyTitle" hidden>
  <div class="scroll-sheet"><div class="entry-shell"><a class="brand entry-brand" href="./"><span class="brand-mark">s<span>f</span></span><span>이야기숲<small>STORY FOREST</small></span></a>
- <div class="entry-intro" tabindex="-1" autofocus><span class="eyebrow">WELCOME TO THE STORY FOREST</span><h1 id="lobbyTitle">이야기숲에 오신 것을 환영해요</h1><p>친구들이 쓰고 그린 책을 만나는 우리 반 도서관.<br>방문할 학급을 선택하고, 이야기숲을 걸어 보세요.</p></div>
- <div class="entry-steps"><span><b>01</b> 학급 선택</span><span><b>02</b> 전시관 둘러보기</span><span><b>03</b> 친구의 책 읽기</span></div>
+ <div class="entry-intro" tabindex="-1" autofocus><h1 id="lobbyTitle">이야기숲에 오신 것을 환영해요</h1><p>친구들이 만든 책을 만나러 가 볼까요?</p></div>
+
  <section class="entry-destinations" aria-labelledby="lobbyDestinationsTitle"><div class="destination-heading"><h2 id="lobbyDestinationsTitle">방문할 학급 도서관</h2><span id="lobbyTotal" class="class-total" hidden></span></div><p id="lobbyStatus" class="status" role="status">학급 도서관을 불러오고 있어요…</p>
- <div id="lobbySearchBar" class="lobby-search" hidden><label for="lobbySearch"><span aria-hidden="true">⌕</span><span class="sr-only">학급 도서관 검색</span></label><input id="lobbySearch" type="search" placeholder="학년·반 또는 도서관 이름으로 찾기" maxlength="80" autocomplete="off" aria-controls="lobbyClasses"><button id="lobbySearchClear" type="button" aria-label="학급 검색어 지우기" hidden>✕</button></div><p id="lobbyResults" class="class-results" role="status" aria-live="polite" hidden></p>
- <div id="lobbyClasses" class="classes-grid lobby-class-list" role="region" aria-label="방문할 학급 목록" tabindex="0"></div><p id="lobbyNoResults" class="search-empty" hidden>일치하는 학급이 없어요. 학년이나 반 이름으로 다시 찾아보세요.</p>
+ <div id="lobbyClasses" class="classes-grid lobby-class-list" role="region" aria-label="방문할 학급 목록" tabindex="-1"></div><p id="lobbyListHint" class="list-scroll-hint" hidden>↕ 목록 안에서 위아래로 스크롤해 학급을 선택하세요.</p>
  <div id="lobbyEmpty" class="entry-empty" hidden><h3>아직 개설된 학급 도서관이 없어요.</h3><p>선생님이 학급을 개설하면 이곳에서 도서관을 선택할 수 있어요.<br>선생님은 아래 버튼으로 로그인하고 첫 학급을 만들어 주세요.</p></div><button id="lobbyRetry" class="outline" hidden>다시 불러오기</button></section>
  <div class="entry-teacher"><div><strong>선생님, 우리 반 도서관을 열어 주세요.</strong><p>교사 계정으로 로그인하면 내 학급을 개설하고 작품을 관리할 수 있어요.</p></div><button id="lobbyTeacherBtn" class="solid" disabled>선생님 · 학급 개설하기 →</button></div>
  </div></div></dialog>

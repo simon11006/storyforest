@@ -39,9 +39,7 @@ try{
  assert.equal($('#entryLobby').hidden,false);assert.equal($('#lobbyEmpty').hidden,false);assert.equal($('#manager').open,false);
  for(let i=1;i<=14;i++)savedStore.memory.classes.set('c'+i,{id:'c'+i,name:`4학년 ${i}반`,capacity:20,teacherEmail:'teacher@example.com',accepting:true});savedStore.memory.classes.set('deleting-other',{id:'deleting-other',name:'다른 교사 학급',deleting:true,teacherEmail:'other@example.com'});await savedStore.onAuth();
  assert.equal(document.querySelectorAll('#lobbyClasses .class-card').length,14);assert.equal($('#lobbyTotal').textContent,'14개 학급');assert.equal(document.querySelectorAll('#lobbyClasses strong')[1].textContent,'4학년 2반','class numbers must use natural sorting');
- $('#lobbySearch').value='4 학년 1 반';$('#lobbySearch').oninput();assert.equal(document.querySelectorAll('#lobbyClasses .class-card').length,1);assert.equal($('#lobbyEmpty').hidden,true);
- $('#lobbySearch').value='4학년 1';$('#lobbySearch').oninput();assert.equal(document.querySelectorAll('#lobbyClasses .class-card').length,6);assert.match($('#lobbyResults').textContent,/검색 결과 6개/);
- $('#lobbySearch').value='없는 학급';$('#lobbySearch').oninput();assert.equal($('#lobbyNoResults').hidden,false);assert.equal($('#lobbyEmpty').hidden,true);$('#lobbySearchClear').onclick();assert.equal(document.querySelectorAll('#lobbyClasses .class-card').length,14);assert.equal($('#lobbySearch').value,'');
+ assert.equal($('#lobbySearch'),null,'the welcome screen must list registered classes without search');assert.equal($('#lobbyListHint').hidden,true,'no scrolling instruction when the list does not overflow');
  savedStore.failLoading=true;await savedStore.onAuth();assert.equal($('#lobbyRetry').hidden,false);assert.equal($('#lobbyEmpty').hidden,true,'a connection failure must not appear as an empty school');
- console.log('PASS empty-school entry, teacher login → class creation, explicit destination, owned-class deletion, connection errors, 14-class search, natural sorting, and empty search results');
+ console.log('PASS empty-school entry, teacher login → class creation, explicit destination, owned-class deletion, connection errors, 14 registered classrooms, natural sorting, and no search field');
 }finally{dom.window.close();globalThis.FormData=originalFormData;globalThis.confirm=originalConfirm;}
