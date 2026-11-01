@@ -1,0 +1,26 @@
+{
+  "name": "storyforest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node serve.mjs",
+    "build": "node build.mjs",
+    "check": "node --check src/main.js && node --check src/store.js && node --check src/gallery.js && node --check src/reader.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "firebase": "^13.1.0",
+    "pdfjs-dist": "^6.4.299",
+    "three": "^0.187.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.13.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

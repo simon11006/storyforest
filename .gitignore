@@ -1,0 +1,15 @@
+node_modules/
+inputs/
+firebase-debug.log
+firestore-debug.log
+.firebase/
+dist/books/*.pdf
+*.tar.gz
+*.tar
+
+# Student work stays in Firebase, not public Git history.
+dist/books/
+.env
+.env.*
+*service-account*.json
+*.pem

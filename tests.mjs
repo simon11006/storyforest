@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {slotPosition,canStand} from './src/gallery.js';
+import {LibraryStore,assertSlot} from './src/store.js';
+assert.equal(new Set(Array.from({length:30},(_,i)=>JSON.stringify(slotPosition(i+1)))).size,30);
+assertSlot(30);assert.throws(()=>assertSlot(31));assert.throws(()=>assertSlot(0));
+assert.equal(canStand(0,20),true);assert.equal(canStand(10,0),false);assert.equal(canStand(4.3,11),false);
+const s=new LibraryStore();s.memory={classes:new Map(),books:new Map()};
+await s.addBook('class-a',{slot:1,title:'책',author:'작가'});
+await s.addBook('class-b',{slot:1,title:'다른 학급 책',author:'작가'});
+await assert.rejects(()=>s.addBook('class-a',{slot:1,title:'덮어쓰기',author:'작가'}));
+assert.equal((await s.books('class-a')).length,1);assert.equal((await s.books('class-b')).length,1);
+console.log('PASS 30 unique positions, room collisions, slot capacity, duplicate protection, classroom isolation');

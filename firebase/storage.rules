@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /schools/{school}/classes/{classId}/{bookId}/{fileName} {
+      function member() { return request.auth != null && request.auth.token.email_verified == true && firestore.get(/databases/(default)/documents/schools/$(school)/members/$(request.auth.token.email)).data.role in ['student','teacher']; }
+      function teacher() { return member() && firestore.get(/databases/(default)/documents/schools/$(school)/members/$(request.auth.token.email)).data.role == 'teacher'; }
+      allow read: if member();
+      allow create: if teacher() && (
+        (fileName == 'book.pdf' && request.resource.size <= 100 * 1024 * 1024 && request.resource.contentType == 'application/pdf') ||
+        (fileName == 'cover.jpg' && request.resource.size <= 2 * 1024 * 1024 && request.resource.contentType == 'image/jpeg')
+      );
+      allow delete: if teacher();
+    }
+  }
+}

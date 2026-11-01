@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verified() { return request.auth != null && request.auth.token.email_verified == true; }
+    function member(school) { return verified() && get(/databases/$(database)/documents/schools/$(school)/members/$(request.auth.token.email)).data.role in ['student','teacher']; }
+    function teacher(school) { return member(school) && get(/databases/$(database)/documents/schools/$(school)/members/$(request.auth.token.email)).data.role == 'teacher'; }
+    match /schools/{school}/members/{email} {
+      allow get: if verified() && request.auth.token.email == email;
+      allow create, update: if teacher(school) && request.resource.data.keys().hasOnly(['role']) && request.resource.data.role in ['teacher','student'];
+    }
+    match /schools/{school}/classes/{classId} {
+      allow read: if member(school);
+      allow create, update: if teacher(school) && request.resource.data.keys().hasOnly(['name','createdAt']) && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40 && request.resource.data.createdAt is number;
+      match /books/{slot} {
+        allow read: if member(school);
+        allow create: if teacher(school) && slot.matches('^([1-9]|[12][0-9]|30)$')
+          && request.resource.data.keys().hasOnly(['slot','title','author','pages','pdfPath','coverPath','bytes','createdAt'])
+          && request.resource.data.slot is int && request.resource.data.slot == int(slot)
+          && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 100
+          && request.resource.data.author is string && request.resource.data.author.size() > 0 && request.resource.data.author.size() <= 50
+          && request.resource.data.pages is int && request.resource.data.pages > 0
+          && request.resource.data.bytes is int && request.resource.data.bytes <= 104857600
+          && request.resource.data.pdfPath.matches('schools/' + school + '/classes/' + classId + '/[^/]+/book.pdf')
+          && request.resource.data.coverPath.matches('schools/' + school + '/classes/' + classId + '/[^/]+/cover.jpg');
+        allow delete: if teacher(school);
+      }
+    }
+  }
+}
