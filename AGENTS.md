@@ -24,3 +24,7 @@
 ## Classroom appearance
 
 - Keep twelve automatic classroom variants: three restrained variations of each of the forest, space, sea, and blossom base themes. Preserve the common library architecture and walking routes. Select the family and variant deterministically from the immutable class ID, so renaming, revisiting, or adding another class does not change an existing classroom. Keep family assignment independent of the variant count. Vary accent colors, foliage, display-frame tops, and ceiling motifs without changing exhibition capacity or book access.
+
+## Teacher navigation
+
+- After verified teacher login, show the teacher management home with an owned-class selector, classroom creation, and a visible logout action. Open the sole assigned classroom automatically; require an explicit management choice when there are multiple owned classes. Visiting another teacher’s public classroom must not expose its management UI. All-class navigation uses a native dropdown rather than a card grid. Keep logout in the sticky management header and clear private management UI after sign-out.

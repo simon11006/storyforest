@@ -37,7 +37,7 @@ export class LibraryStore {
  signup(email,password){return createUserWithEmailAndPassword(this.auth,email,password);}
  verify(){return sendEmailVerification(this.auth.currentUser);}
  resetPassword(email){return sendPasswordResetEmail(this.auth,email);}
- logout(){return signOut(this.auth);}
+ async logout(){await signOut(this.auth);this.user=this.auth.currentUser;await this.refreshRole();}
  manages(c){return this.mode==='local'||(this.canCreateClass()&&(this.isAdmin===true||c?.teacherEmail===this.user.email.toLowerCase()));}
  async canManageId(id){if(this.mode==='local')return true;return this.manages({...(await getDoc(doc(this.classCollection(),id))).data()});}
  async updateClass(c,changes){
