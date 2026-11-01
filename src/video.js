@@ -34,3 +34,22 @@ export function videoAction(book){
  let href;try{href=youtubeLink(book.youtubeUrl);}catch{return null;}if(!href)return null;
  const button=document.createElement('button');button.type='button';button.className='video-action';button.textContent='▶ 영상 바로보기';button.setAttribute('aria-label',book.title+' 영상 바로보기');button.onclick=()=>openVideo(book);return button;
 }
+
+const thumbnailCovers=new Map();
+export async function videoThumbnailCover(book){
+ let url;try{url=youtubeLink(book.youtubeUrl);}catch{return videoCover(book.title);}
+ if(!url||typeof Image==='undefined')return videoCover(book.title);
+ const id=new URL(url).searchParams.get('v'),key=id+'|'+book.title;
+ if(thumbnailCovers.has(key))return thumbnailCovers.get(key);
+ const pending=(async()=>{
+  for(const quality of ['maxresdefault','hqdefault']){
+   try{
+    const img=await new Promise((resolve,reject)=>{const image=new Image();image.crossOrigin='anonymous';const timer=setTimeout(()=>reject(Error('Thumbnail timeout')),4000);image.onload=()=>{clearTimeout(timer);image.naturalWidth>120?resolve(image):reject(Error('Missing thumbnail'));};image.onerror=()=>{clearTimeout(timer);reject(Error('Thumbnail unavailable'));};image.src='https://i.ytimg.com/vi/'+id+'/'+quality+'.jpg';});
+    const canvas=document.createElement('canvas');canvas.width=420;canvas.height=600;const c=canvas.getContext('2d');c.fillStyle='#244b43';c.fillRect(0,0,420,600);c.strokeStyle='#d9bc7d';c.lineWidth=3;c.strokeRect(12,12,396,576);
+    const scale=Math.min(380/img.naturalWidth,470/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;c.drawImage(img,(420-w)/2,24+(470-h)/2,w,h);
+    c.fillStyle='#fff4da';c.textAlign='center';c.font='bold 24px sans-serif';c.fillText('▶ 영상북',210,535,370);c.font='21px sans-serif';c.fillText(String(book.title||'영상북'),210,571,370);return canvas.toDataURL('image/jpeg',.9);
+   }catch{}
+  }
+  thumbnailCovers.delete(key);return videoCover(book.title);
+ })();thumbnailCovers.set(key,pending);return pending;
+}
