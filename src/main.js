@@ -35,7 +35,7 @@ function updateLobbyActions(){
 function renderLobby(){
  const visible=listedClasses(),select=$('#lobbyClassSelect'),selection=select.value,placeholder=element('option','학급 선택하기');placeholder.value='';select.replaceChildren(placeholder);
  for(const c of visible){const option=element('option',c.name+(c.deleting?' · 삭제 정리 중':` · ${classCapacity(c)}개 전시 자리`));option.value=c.id;select.append(option);}select.value=visible.some(c=>c.id===selection)?selection:'';
- $('#lobbyTotal').hidden=!classesLoaded||!visible.length||!!entryError;$('#lobbyTotal').textContent=visible.length+'개 학급';$('#lobbyEmpty').hidden=!classesLoaded||visible.length>0||!!entryError;$('#lobbyRetry').hidden=!entryError;$('#lobbyTeacherBtn').disabled=!classesLoaded;$('#lobbyTeacherBtn').textContent=store.canCreateClass()&&!preview?'내 학급 도서관 개설하기 →':'선생님 · 학급 개설하기 →';
+ $('#lobbyEmpty').hidden=!classesLoaded||visible.length>0||!!entryError;$('#lobbyRetry').hidden=!entryError;$('#lobbyTeacherBtn').disabled=!classesLoaded;$('#lobbyTeacherBtn').textContent=store.canCreateClass()&&!preview?'내 학급 도서관 개설하기 →':'선생님 · 학급 개설하기 →';
  status('#lobbyStatus',entryError||(classesLoaded?(visible.length?'학급 선택하기를 눌러 주세요.':'선생님이 첫 학급 도서관을 개설해 주세요.'):'학급 도서관을 불러오고 있어요…'),!!entryError);updateLobbyActions();
 }
 $('#lobbyClassSelect').onchange=updateLobbyActions;
