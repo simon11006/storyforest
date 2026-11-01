@@ -29,7 +29,7 @@ class TestReader{}
 const source=fs.readFileSync(new URL('./src/main.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'');
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 try{
- await new AsyncFunction('LibraryStore','Gallery','Reader','inspectPDF','setupManagement','classCapacity','availableSlots','exhibitedBooks','showBookSuccess','youtubeLink','videoAction','prepareBook','openVideo',source)(TestStore,TestGallery,TestReader,()=>{},setupManagement,classCapacity,availableSlots,exhibitedBooks,showBookSuccess,youtubeLink,videoAction,prepareBook,openVideo);
+ const returnHome=await new AsyncFunction('LibraryStore','Gallery','Reader','inspectPDF','setupManagement','classCapacity','availableSlots','exhibitedBooks','showBookSuccess','youtubeLink','videoAction','prepareBook','openVideo',source+'\nreturn returnToLobby;')(TestStore,TestGallery,TestReader,()=>{},setupManagement,classCapacity,availableSlots,exhibitedBooks,showBookSuccess,youtubeLink,videoAction,prepareBook,openVideo);
  const $=s=>document.querySelector(s),tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal($('#manager').open,true,'an authenticated manager lands on management');assert.equal($('#managedClassSelect').value,'existing');assert.equal($('#bookCount').textContent,'30');
  $('#manageBtn').click();await tick();
@@ -42,5 +42,6 @@ try{
  assert.equal((await savedStore.books('existing')).length,30);
  $('#classPolicy input[type=number]').value='30';await $('#classPolicy button').onclick();await tick();
  assert.equal($('#bookCount').textContent,'30');assert.equal(document.querySelectorAll('.book-tile').length,30);assert.equal(scene.books.length,30);assert.equal($('[data-zone="2"]').hidden,false);
+ returnHome();assert.equal($('#entryLobby').open,true);assert.equal($('#manager').open,false);assert.equal(document.querySelector('main').inert,true);console.log('PASS completion navigation closes management and restores the class selection lobby');
  console.log('PASS existing class 30 → 20 → 30: saved settings, gallery, catalog, counters, slots, zones, and retained works');
 }finally{globalThis.fetch=originalFetch;dom.window.close();}
