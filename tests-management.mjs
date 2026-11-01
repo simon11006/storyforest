@@ -6,7 +6,7 @@ const dom=new JSDOM(fs.readFileSync(new URL('./src/index.html',import.meta.url),
 globalThis.document=dom.window.document;globalThis.MutationObserver=dom.window.MutationObserver;
 const $=s=>document.querySelector(s),tick=()=>new Promise(resolve=>setTimeout(resolve,0));
 let cls={id:'test',name:'테스트 학급',capacity:20,teacherEmail:'teacher@example.com',accepting:true},saved,slots=Array.from({length:19},(_,i)=>({slot:i+1}));
-const store={isAdmin:false,manages:()=>true,submissions:async()=>[{title:'마지막 작품',author:'작가',pages:1}],books:async()=>slots,members:async()=>[{email:'teacher@example.com',role:'teacher'}],updateClass:async(c,changes)=>{saved=changes;cls={...cls,...changes};}};
+const store={isAdmin:false,manages:()=>true,submissions:async()=>[{title:'마지막 작품',author:'작가',pages:1}],books:async()=>slots,updateClass:async(c,changes)=>{saved=changes;cls={...cls,...changes};}};
 setupManagement({store,getCurrent:()=>cls,getClasses:()=>[cls],refresh:async()=>{},openDialog:()=>{},status:(s,text)=>$(s).textContent=text,friendly:e=>e.message});
 $('#manageBtn').click();await tick();
 assert.equal($('#classPolicy input[type=number]').value,'20');
@@ -19,7 +19,7 @@ assert.equal(saved.capacity,12);assert.equal(saved.accepting,false);assert.equal
 $('#classPolicy input[type=number]').value='0';saved=null;await $('#classPolicy button').onclick();assert.equal(saved,null);assert.match($('#managerStatus').textContent,/1~30/);
 assert.equal([...document.querySelectorAll('#classPolicy button')].some(b=>b.textContent==='내 학급 도서관 삭제'),true);
 store.isAdmin=true;$('#manageBtn').click();await tick();assert.equal($('#adminClasses input[type=number]').value,'12');
-$('#adminClasses input[type=number]').value='20';await $('#adminClasses button').onclick();assert.equal(saved.capacity,20);
+assert.equal($('#inviteForm'),null);assert.equal($('#memberList'),null);$('#adminClasses input[type=email]').value='new-teacher@example.com';$('#adminClasses input[type=number]').value='20';await $('#adminClasses button').onclick();assert.equal(saved.capacity,20);assert.equal(saved.teacherEmail,'new-teacher@example.com','administrator assignment must not require prior membership registration');
 slots=Array.from({length:20},(_,i)=>({slot:i+1}));$('#refreshSubmissions').click();await tick();assert.equal($('#submissionList select').options.length,0);assert.equal([...document.querySelectorAll('#submissionList button')].find(b=>b.textContent==='승인하여 전시').disabled,true);
 assert.equal($('#createClassForm input[name=capacity]').min,'1');assert.equal($('#createClassForm input[name=capacity]').max,'30');
 console.log('PASS teacher/admin capacity settings, submission explanation, validation, creation field, and approval-slot limits');

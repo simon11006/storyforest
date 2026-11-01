@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
 import {doc,setDoc,updateDoc,getDoc,deleteDoc} from 'firebase/firestore';
-import {ref,uploadBytes} from 'firebase/storage';
+import {ref,uploadBytes,getMetadata,listAll} from 'firebase/storage';
 import {LibraryStore} from './src/store.js';
 import assert from 'node:assert/strict';
 const projectId='demo-storyforest-capacity';
@@ -14,8 +14,13 @@ const data={name:'20명 학급',teacherEmail,createdAt:1,accepting:true,autoPubl
 const book=(slot,c='twenty',owner='student_works')=>({slot,title:'테스트 작품',author:'작가',pages:1,bytes:10,createdAt:1,pdfPath:`${base}${c}/${owner}/book.pdf`,coverPath:`${base}${c}/${owner}/cover.jpg`});
 try{
  await env.clearFirestore();await env.clearStorage();
- await env.withSecurityRulesDisabled(async c=>{const db=c.firestore();for(const [email,role]of [[teacherEmail,'teacher'],['other@example.com','teacher'],['endeavor1006@naver.com','admin']])await setDoc(doc(db,'schools/test/members/'+email),{role});await setDoc(doc(db,base+'twenty'),data);const{capacity,...legacy}=data;await setDoc(doc(db,base+'legacy'),legacy);await setDoc(doc(db,base+'review'),{...data,autoPublish:false});});
+ await env.withSecurityRulesDisabled(async c=>{const db=c.firestore();for(const [email,role]of [['endeavor1006@naver.com','admin'],['legacy@example.com','student']])await setDoc(doc(db,'schools/test/members/'+email),{role});await setDoc(doc(db,base+'twenty'),data);const{capacity,...legacy}=data;await setDoc(doc(db,base+'legacy'),legacy);await setDoc(doc(db,base+'review'),{...data,autoPublish:false});});
  const own=doc(teacher.firestore(),base+'twenty');
+ assert.equal((await getDoc(doc(teacher.firestore(),'schools/test/members/'+teacherEmail))).exists(),false,'new teachers must work without membership records');
+ for(const role of ['teacher','admin'])await assertFails(setDoc(doc(teacher.firestore(),'schools/test/members/'+teacherEmail),{role}));
+ await assertFails(updateDoc(doc(teacher.firestore(),'schools/test/members/endeavor1006@naver.com'),{role:'teacher'}));
+ await assertFails(deleteDoc(doc(teacher.firestore(),'schools/test/members/endeavor1006@naver.com')));
+ const legacyTeacher=context('legacy-teacher','legacy@example.com');await assertSucceeds(setDoc(doc(legacyTeacher.firestore(),base+'legacy-account'),{...data,teacherEmail:'legacy@example.com'}));
  await assertSucceeds(updateDoc(own,{capacity:19}));await assertSucceeds(updateDoc(own,{capacity:20}));
  for(const capacity of [0,31,20.5,'20'])await assertFails(updateDoc(own,{capacity}));
  await assertFails(updateDoc(doc(other.firestore(),base+'twenty'),{capacity:10}));
@@ -33,10 +38,16 @@ try{
  await assertSucceeds(setDoc(doc(teacher.firestore(),base+'legacy/books/30'),book(30,'legacy')));
  await assertFails(setDoc(doc(student.firestore(),base+'review/books/1'),book(1,'review')));
  const submission={title:'대기 작품',author:'작가',pages:1,bytes:10,createdAt:1,pdfPath:'schools/test/incoming/review/student/book.pdf',coverPath:'schools/test/incoming/review/student/cover.jpg'};
+ await assertSucceeds(uploadBytes(ref(student.storage(),submission.pdfPath),new Uint8Array([1,2,3]),{contentType:'application/pdf'}));
  await assertSucceeds(setDoc(doc(student.firestore(),base+'review/submissions/student'),submission));
+ await assertSucceeds(getDoc(doc(teacher.firestore(),base+'review/submissions/student')));await assertFails(getDoc(doc(other.firestore(),base+'review/submissions/student')));
+ await assertSucceeds(getMetadata(ref(teacher.storage(),submission.pdfPath)));await assertSucceeds(getMetadata(ref(admin.storage(),submission.pdfPath)));await assertFails(getMetadata(ref(other.storage(),submission.pdfPath)));
+ await assertSucceeds(listAll(ref(teacher.storage(),'schools/test/incoming/review')));await assertFails(listAll(ref(other.storage(),'schools/test/incoming/review')));
  await assertSucceeds(updateDoc(own,{accepting:false}));await assertFails(setDoc(doc(student.firestore(),base+'twenty/books/1'),book(1)));await assertSucceeds(setDoc(doc(teacher.firestore(),base+'twenty/books/1'),book(1)));
  await assertSucceeds(updateDoc(own,{accepting:true}));
- const store=new LibraryStore();store.mode='firebase';store.firestore=teacher.firestore()._delegate;store.school='test';store.storage=teacher.storage()._delegate;store.role='teacher';store.user={email:teacherEmail,emailVerified:true};
+ const store=new LibraryStore();store.mode='firebase';store.firestore=teacher.firestore()._delegate;store.school='test';store.storage=teacher.storage()._delegate;store.user={email:teacherEmail,emailVerified:true};await store.refreshRole();assert.equal(store.role,'teacher');assert.equal(store.isAdmin,false);assert.equal(store.canCreateClass(),true);assert.equal(store.manages(data),true);assert.equal(store.manages({...data,teacherEmail:'other@example.com'}),false);
+ const legacyStore=new LibraryStore();Object.assign(legacyStore,{mode:'firebase',school:'test',firestore:legacyTeacher.firestore()._delegate,user:{email:'legacy@example.com',emailVerified:true}});await legacyStore.refreshRole();assert.equal(legacyStore.role,'teacher','existing accounts can use the self-service flow');
+ const adminStore=new LibraryStore();Object.assign(adminStore,{mode:'firebase',school:'test',firestore:admin.firestore()._delegate,user:{email:'endeavor1006@naver.com',emailVerified:true}});await adminStore.refreshRole();assert.equal(adminStore.isAdmin,true);assert.equal(adminStore.manages(data),true);
  const ownClass=await store.addClass('새 교사 학급',20);assert.equal(ownClass.teacherEmail,teacherEmail);await store.deleteClass(ownClass);assert.equal((await getDoc(doc(teacher.firestore(),base+ownClass.id))).exists(),false);
  await env.withSecurityRulesDisabled(async ctx=>setDoc(doc(ctx.firestore(),base+'someone-else'),{...data,teacherEmail:'other@example.com'}));await assert.rejects(()=>store.deleteClass({id:'someone-else'}),/자기 학급/);
  await assertSucceeds(store.updateClass({id:'twenty'},{capacity:19}));assert.equal((await store.getClass('twenty')).capacity,19);assert.equal((await getDoc(doc(teacher.firestore(),base+'twenty/books/20'))).exists(),true,'reducing an existing class retains its books');await store.updateClass({id:'twenty'},{capacity:20});
@@ -44,5 +55,5 @@ try{
  await assertSucceeds(upload(student,19));await assertFails(upload(student,21));await assertFails(upload(teacher,21,'twenty','teacher-works'));
  await assertSucceeds(upload(teacher,30,'legacy','teacher-legacy'));
  await assertSucceeds(updateDoc(own,{accepting:false}));await assertFails(upload(student,18,'twenty','student_closed'));await assertSucceeds(upload(teacher,18,'twenty','teacher-closed'));
- console.log('PASS Firestore/Storage capacity limits, legacy defaults, teacher ownership, review/closed submissions, and retained works after reductions');
+ console.log('PASS self-service verified teachers without membership, legacy accounts, protected administrator, private submissions, Firestore/Storage capacity limits, legacy defaults, teacher ownership, review/closed submissions, and retained works after reductions');
 }finally{await env.cleanup();}

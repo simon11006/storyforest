@@ -1,7 +1,7 @@
 import {classCapacity,assertCapacity,availableSlots} from './capacity.js';
 export function setupManagement({store,inspectPDF,read,openDialog,status,friendly,getCurrent,getClasses,refresh,renderManager}){
  const $=s=>document.querySelector(s),el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
- $('#adminPanel').prepend($('#invitePanel'));$('#editorPanel').before($('#adminPanel'),$('#reviewPanel'));const create=el('button','학급 개설·이동');create.className='outline';create.onclick=()=>{$('#manager').close();$('#classesBtn').click();};$('#storageNote').after(create);
+ $('#editorPanel').before($('#adminPanel'),$('#reviewPanel'));const create=el('button','학급 개설·이동');create.className='outline';create.onclick=()=>{$('#manager').close();$('#classesBtn').click();};$('#storageNote').after(create);
  let submitting=false,reviewGeneration=0,studentClass;
  const error=e=>status('#managerStatus',friendly(e),true);
  const activeDeletes=new Set();
@@ -37,13 +37,12 @@ export function setupManagement({store,inspectPDF,read,openDialog,status,friendl
  async function dashboard(){if(!store.isAdmin)return;const host=$('#adminClasses');host.replaceChildren();for(const c of getClasses()){
   const row=el('article');row.className='admin-row class-settings';const name=el('input'),teacher=el('input'),capacity=capacityField(c),accept=submissionField(c),save=el('button','학급 설정 저장'),remove=el('button',c.deleting?'삭제 계속하기':'학급과 작품 모두 삭제');
   name.value=c.name;name.maxLength=40;name.setAttribute('aria-label',c.name+' 학급 이름');teacher.value=c.teacherEmail||'';teacher.type='email';teacher.placeholder='담당 교사 이메일';teacher.setAttribute('aria-label',c.name+' 담당 교사 이메일');row.append(field('학급 이름',name),field('담당 교사 이메일',teacher),field('전시할 작품 수 (학생 수)',capacity),capacityNote(),accept.label,submissionNote(),save,remove);
-  save.onclick=async()=>{save.disabled=true;try{assertCapacity(capacity.valueAsNumber);const email=teacher.value.trim().toLowerCase();if(!name.value.trim()||!email||!teacher.checkValidity())throw Error('학급 이름과 올바른 교사 이메일을 입력해 주세요.');const members=await store.members();if(!members.some(m=>m.email===email&&['admin','teacher'].includes(m.role)))throw Error('먼저 아래에서 해당 이메일을 교사로 등록해 주세요.');await store.updateClass(c,{name:name.value.trim(),teacherEmail:email,capacity:capacity.valueAsNumber,accepting:accept.input.checked});await refresh();await dashboard();renderPolicy();status('#managerStatus','학급 설정을 저장했습니다.');}catch(e){error(e);}finally{save.disabled=false;}};
+  save.onclick=async()=>{save.disabled=true;try{assertCapacity(capacity.valueAsNumber);const email=teacher.value.trim().toLowerCase();if(!name.value.trim()||!email||!teacher.checkValidity())throw Error('학급 이름과 올바른 교사 이메일을 입력해 주세요.');await store.updateClass(c,{name:name.value.trim(),teacherEmail:email,capacity:capacity.valueAsNumber,accepting:accept.input.checked});await refresh();await dashboard();renderPolicy();status('#managerStatus','학급 설정을 저장했습니다.');}catch(e){error(e);}finally{save.disabled=false;}};
   save.disabled=c.deleting===true;remove.disabled=activeDeletes.has(c.id);remove.className='danger-button';remove.onclick=()=>requestDelete(c,remove);host.append(row);
  }
- const list=$('#memberList');list.replaceChildren();for(const m of await store.members()){const row=el('div');row.className='admin-row';row.append(el('strong',m.email));if(m.role==='admin'){row.append(el('p','관리자 · 보호된 계정'));}else{const role=el('select');role.setAttribute('aria-label',m.email+' 역할');for(const [value,title]of [['teacher','교사'],['student','학생']]){const o=el('option',title);o.value=value;role.append(o);}role.value=m.role;const save=el('button','역할 저장'),remove=el('button','접근 권한 회수');save.onclick=async()=>{try{await store.invite(m.email,role.value);status('#managerStatus','역할을 저장했습니다.');}catch(e){error(e);}};remove.onclick=async()=>{if(!confirm(m.email+'의 접근 권한을 회수할까요?'))return;try{await store.removeMember(m.email);await dashboard();}catch(e){error(e);}};row.append(role,save,remove);}list.append(row);}}
+ }
  $('#refreshSubmissions').onclick=review;
  $('#manageBtn').addEventListener('click',()=>{review();dashboard().catch(error);});
- $('#inviteForm').addEventListener('submit',()=>{setTimeout(()=>dashboard().catch(error),800);});
  // A newly authenticated manager can enter the console without reopening the dialog.
  const observer=new MutationObserver(()=>{if(!$('#adminPanel').hidden)dashboard().catch(error);});observer.observe($('#adminPanel'),{attributes:true,attributeFilter:['hidden']});const reviewObserver=new MutationObserver(()=>{if(!$('#reviewPanel').hidden)review();});reviewObserver.observe($('#reviewPanel'),{attributes:true,attributeFilter:['hidden']});
 }

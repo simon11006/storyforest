@@ -23,7 +23,7 @@ async function seed(c,pendingCount=1){
 async function assertGone(c){await env.withSecurityRulesDisabled(async ctx=>{const db=ctx.firestore();assert.equal((await getDoc(doc(db,`${base}/classes/${c}`))).exists(),false);assert.equal((await getDocs(collection(db,`${base}/classes/${c}/books`))).size,0);assert.equal((await getDocs(collection(db,`${base}/classes/${c}/submissions`))).size,0);for(const prefix of [`${base}/classes/${c}`,`${base}/incoming/${c}`]){const result=await listAll(ref(ctx.storage(),prefix));assert.equal(result.items.length+result.prefixes.length,0);}});}
 try{
  await env.clearFirestore();await env.clearStorage();
- await env.withSecurityRulesDisabled(async ctx=>{for(const address of [email,'other@example.com'])await setDoc(doc(ctx.firestore(),`${base}/members/${address}`),{role:'teacher'});});
+ await store.refreshRole();assert.equal(store.role,'teacher','cascade management must work without administrator registration');
  await seed('populated',405);await seed('untouched');await seed('retry');
  await assertSucceeds(listAll(ref(teacher.storage(),`${base}/classes/populated`)));
  await assertFails(listAll(ref(other.storage(),`${base}/classes/populated`)));await assertFails(listAll(ref(student.storage(),`${base}/incoming/populated`)));

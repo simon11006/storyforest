@@ -2,10 +2,9 @@ rules_version = '2';
 service cloud.firestore {
  match /databases/{database}/documents {
   function signed(){return request.auth != null;}
-  function role(s){return signed() && request.auth.token.email_verified == true ? get(/databases/$(database)/documents/schools/$(s)/members/$(request.auth.token.email)).data.role : '';}
-  function admin(s){return role(s)=='admin';}
-  function member(s){return role(s) in ['admin','teacher','student'];}
-  function manages(s,c){return admin(s) || (role(s)=='teacher' && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.teacherEmail==request.auth.token.email);}
+  function verified(){return signed() && request.auth.token.get('email','')!='' && request.auth.token.get('email_verified',false)==true;}
+  function admin(s){return verified() && exists(/databases/$(database)/documents/schools/$(s)/members/$(request.auth.token.email)) && get(/databases/$(database)/documents/schools/$(s)/members/$(request.auth.token.email)).data.role=='admin';}
+  function manages(s,c){return verified() && (get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.teacherEmail==request.auth.token.email || admin(s));}
   function capacity(s,c){return get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.get('capacity',30);}
   function deleting(s,c){return get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.get('deleting',false);}
   function validClass(){let d=request.resource.data;let limit=d.get('capacity',30);let removing=d.get('deleting',false);return d.keys().hasOnly(['name','createdAt','teacherEmail','accepting','autoPublish','capacity','deleting']) && d.name is string && d.name.size()>0 && d.name.size()<=40 && d.createdAt is number && d.teacherEmail is string && d.accepting is bool && d.autoPublish is bool && limit is int && limit>=1 && limit<=30 && removing is bool && (!removing || d.accepting==false);}
@@ -13,12 +12,12 @@ service cloud.firestore {
   match /schools/{s}/members/{email}{
    allow get: if admin(s) || (signed() && request.auth.token.email_verified==true && request.auth.token.email==email);
    allow list: if admin(s);
-   allow create,update: if admin(s) && email!='endeavor1006@naver.com' && request.resource.data.keys().hasOnly(['role']) && request.resource.data.role in ['teacher','student'];
-   allow delete: if admin(s) && email!='endeavor1006@naver.com';
+   // Teacher access comes from verified sign-up; administrator records are console-managed.
+   allow write: if false;
   }
   match /schools/{s}/classes/{c}{
    allow read: if true;
-   allow create: if validClass() && request.resource.data.get('deleting',false)==false && (admin(s) || (role(s)=='teacher' && request.resource.data.teacherEmail==request.auth.token.email));
+   allow create: if validClass() && request.resource.data.get('deleting',false)==false && ((verified() && request.resource.data.teacherEmail==request.auth.token.email) || admin(s));
    allow update: if validClass() && (resource.data.get('deleting',false)==false || (request.resource.data.get('deleting',false)==true && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleting','accepting']))) && (admin(s) || (manages(s,c) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','accepting','autoPublish','capacity','deleting'])));
    allow delete: if manages(s,c) && resource.data.get('deleting',false)==true;
    match /books/{slot}{

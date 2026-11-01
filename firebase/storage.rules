@@ -1,8 +1,9 @@
 rules_version = '2';
 service firebase.storage {
  match /b/{bucket}/o {
-  function role(s){return request.auth!=null && request.auth.token.email_verified==true ? firestore.get(/databases/(default)/documents/schools/$(s)/members/$(request.auth.token.email)).data.role : '';}
-  function manages(s,c){return role(s)=='admin' || (role(s)=='teacher' && firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.teacherEmail==request.auth.token.email);}
+  function verified(){return request.auth!=null && request.auth.token.get('email','')!='' && request.auth.token.get('email_verified',false)==true;}
+  function admin(s){return verified() && firestore.exists(/databases/(default)/documents/schools/$(s)/members/$(request.auth.token.email)) && firestore.get(/databases/(default)/documents/schools/$(s)/members/$(request.auth.token.email)).data.role=='admin';}
+  function manages(s,c){return verified() && (firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.teacherEmail==request.auth.token.email || admin(s));}
   function capacity(s,c){return firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.get('capacity',30);}
   function deleting(s,c){return firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.get('deleting',false);}
   match /schools/{s}/classes/{c}/{allPaths=**}{allow list: if manages(s,c);}

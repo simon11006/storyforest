@@ -15,7 +15,9 @@ class TestStore extends LibraryStore{
  async getClass(id){return this.memory.classes.get(id);}
  async books(){return[];}
  watch(){return()=>{};}
- async login(email){this.user={email,emailVerified:true};this.role='teacher';this.canRead=true;this.canEdit=true;await this.onAuth();}
+ async signup(email){this.user={email,emailVerified:false};await this.onAuth();}
+ async verify(){this.verificationSent=true;}
+ async refreshAuth(){this.user.emailVerified=true;this.role='teacher';this.canRead=true;this.canEdit=true;await this.onAuth();}
  async addClass(name,capacity){assert.equal(this.canCreateClass(),true);const c={id:'new-class',name,capacity,teacherEmail:this.user.email,accepting:true,autoPublish:false};this.memory.classes.set(c.id,c);return c;}
  async deleteClass(c){assert.equal(this.manages(c),true);this.memory.classes.delete(c.id);}
  async submissions(){return[];}
@@ -30,7 +32,8 @@ try{
  const $=s=>document.querySelector(s),tick=()=>new Promise(resolve=>setTimeout(resolve,0));
  assert.equal($('#entryLobby').hidden,false);assert.equal($('#entryLobby').tagName,'DIALOG');assert.equal($('#entryLobby').open,true);assert.equal($('#lobbyEmpty').hidden,false);assert.equal(document.querySelectorAll('#lobbyClasses .class-card').length,0);assert.equal($('#studentBtn').disabled,true);
  $('#lobbyTeacherBtn').click();assert.equal($('#manager').open,true);assert.equal($('#teacherCreateHint').hidden,false);
- const login=$('#loginForm');login.elements.email.value='teacher@example.com';login.elements.password.value='test-password';await login.onsubmit({preventDefault(){},target:login,submitter:login.querySelector('[value=login]')});await tick();
+ const login=$('#loginForm');login.elements.email.value='teacher@example.com';login.elements.password.value='test-password';await login.onsubmit({preventDefault(){},target:login,submitter:login.querySelector('[value=signup]')});await tick();
+ assert.equal(savedStore.canCreateClass(),false,'email verification is still required');assert.equal($('#verifyEmail').hidden,false);await $('#verifyEmail').onclick();assert.equal(savedStore.verificationSent,true);await $('#refreshAuth').onclick();await tick();
  assert.equal($('#manager').open,false);assert.equal($('#classesDialog').open,true);assert.equal($('.class-create').hidden,false,'a verified teacher can open the creation form');assert.equal(savedStore.isAdmin,false);
  const create=$('#createClassForm');create.elements.name.value='4학년 1반';create.elements.capacity.value='20';await create.onsubmit({preventDefault(){},target:create});await tick();
  assert.equal($('#entryLobby').hidden,true);assert.equal($('#className').textContent,'4학년 1반');assert.equal((await savedStore.getClass('new-class')).teacherEmail,'teacher@example.com');
@@ -41,5 +44,5 @@ try{
  assert.equal(document.querySelectorAll('#lobbyClasses .class-card').length,14);assert.equal($('#lobbyTotal').textContent,'14개 학급');assert.equal(document.querySelectorAll('#lobbyClasses strong')[1].textContent,'4학년 2반','class numbers must use natural sorting');
  assert.equal($('#lobbySearch'),null,'the welcome screen must list registered classes without search');assert.equal($('#lobbyListHint').hidden,true,'no scrolling instruction when the list does not overflow');
  savedStore.failLoading=true;await savedStore.onAuth();assert.equal($('#lobbyRetry').hidden,false);assert.equal($('#lobbyEmpty').hidden,true,'a connection failure must not appear as an empty school');
- console.log('PASS empty-school entry, teacher login → class creation, explicit destination, owned-class deletion, connection errors, 14 registered classrooms, natural sorting, and no search field');
+ console.log('PASS empty-school entry, teacher signup → email verification → class creation without administrator approval, explicit destination, owned-class deletion, connection errors, 14 registered classrooms, natural sorting, and no search field');
 }finally{dom.window.close();globalThis.FormData=originalFormData;globalThis.confirm=originalConfirm;}
