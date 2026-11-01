@@ -1,17 +1,68 @@
 {
-  "firestore": {"rules": "firebase/firestore.rules"},
-  "storage": {"rules": "firebase/storage.rules"},
+  "firestore": {
+    "rules": "firebase/firestore.rules"
+  },
+  "storage": {
+    "rules": "firebase/storage.rules"
+  },
   "hosting": {
-    "site": "fairytale-94bbd",
+    "site": "fairytale2026",
     "public": ".firebase-hosting",
-    "predeploy": ["node prepare-hosting.mjs"],
-    "ignore": ["**/.*", "**/node_modules/**", "books/**", "**/*.pdf"],
+    "predeploy": [
+      "node prepare-hosting.mjs"
+    ],
+    "ignore": [
+      "**/.*",
+      "**/node_modules/**",
+      "books/**",
+      "**/*.pdf"
+    ],
     "headers": [
-      {"source": "**", "headers": [{"key": "X-Content-Type-Options", "value": "nosniff"}]},
-      {"source": "/index.html", "headers": [{"key": "Cache-Control", "value": "no-cache"}]},
-      {"source": "/assets/**", "headers": [{"key": "Cache-Control", "value": "no-cache"}]},
-      {"source": "/style.css", "headers": [{"key": "Cache-Control", "value": "no-cache"}]},
-      {"source": "/*.json", "headers": [{"key": "Cache-Control", "value": "no-cache"}]}
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          }
+        ]
+      },
+      {
+        "source": "/index.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/assets/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/style.css",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/*.json",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
     ]
   }
 }

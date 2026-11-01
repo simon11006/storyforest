@@ -8,7 +8,7 @@
 
 ## Firebase Hosting
 
-- The user selected Firebase Hosting for the production deployment on 2026-11-01. Production URL: https://fairytale-94bbd.web.app (project/site `fairytale-94bbd`). Use Firebase for future production updates; keep the former owner-private Sites deployment unchanged unless requested.
+- The user selected Firebase Hosting for the production deployment on 2026-11-01. Production URL: https://fairytale2026.web.app (project `fairytale-94bbd`, Hosting site `fairytale2026`). Use Firebase for future production updates; keep the former owner-private Sites deployment unchanged unless requested.
 - Deploy with `firebase deploy --only hosting --project fairytale-94bbd`. Its predeploy hook builds `.firebase-hosting` with `prepare-hosting.mjs`. Never point Firebase Hosting directly at the private `dist` directory.
 - Public Hosting contains application assets and an empty `books.json`. Student works stay in authenticated Firebase Storage. The existing Firestore and Storage membership rules must remain in place.
 - GitHub pushes are required but do not themselves deploy Firebase; no GitHub Actions deployment credential has been configured.
