@@ -8,8 +8,9 @@ const originalFormData=globalThis.FormData;globalThis.FormData=dom.window.FormDa
 const classes=[{id:'one',name:'4학년 1반',accepting:true},{id:'two',name:'4학년 2반',accepting:true},{id:'closed',name:'4학년 3반',accepting:false}];
 const $=s=>document.querySelector(s);let submittedTo,finishPDF;
 const store={isAdmin:false,manages:()=>false,submitBook:async c=>{submittedTo=c;return{published:false};}};
-setupManagement({store,getCurrent:()=>classes[0],getClasses:()=>classes,openDialog:()=>{},refresh:async()=>{},status:(s,t)=>$(s).textContent=t,friendly:e=>e.message,inspectPDF:()=>new Promise(resolve=>finishPDF=resolve)});
+setupManagement({store,getCurrent:()=>classes[0],getClasses:()=>classes,getEntryClass:()=>classes[1],openDialog:()=>{},refresh:async()=>{},status:(s,t)=>$(s).textContent=t,friendly:e=>e.message,inspectPDF:()=>new Promise(resolve=>finishPDF=resolve)});
 try{
+ $('#lobbyStudentBtn').onclick();assert.equal($('#studentClassSelect').value,'two','the welcome registration button uses its chosen class rather than the current gallery');
  $('#studentBtn').onclick();assert.equal($('#studentClass').textContent,'4학년 1반');assert.equal($('#studentClassSelect').value,'one');assert.match($('#studentSubmit').textContent,/4학년 1반/);
  const select=$('#studentClassSelect');select.value='closed';select.onchange({target:select});assert.equal($('#studentSubmit').disabled,true);assert.match($('#studentMode').textContent,/제출을 받지 않습니다/);
  select.value='two';select.onchange({target:select});assert.equal($('#studentClass').textContent,'4학년 2반');assert.match($('#studentSubmit').textContent,/4학년 2반/);

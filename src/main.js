@@ -25,15 +25,24 @@ function showLobby(show){const lobby=$('#entryLobby');if(show&&document.querySel
 function enterExhibition(){if(!current)return;showLobby(false);walking();gallery.active=true;$('#sceneHost').focus({preventScroll:true});}
 function listedClasses(){return classes.filter(c=>!c.deleting||store.manages(c)).sort((a,b)=>a.name.localeCompare(b.name,'ko',{numeric:true}));}
 function classCard(c){const btn=element('button',undefined,'class-card'+(current?.id===c.id?' selected':''));btn.append(element('strong',c.name),element('small',c.deleting?'삭제 계속하기':`${classCapacity(c)}개 전시 자리 · ${current?.id===c.id?'머무는 중':'도서관 들어가기'}`),element('span','↗','arrow'));btn.onclick=async()=>{btn.disabled=true;try{await selectClass(c);$('#classesDialog').close();enterExhibition();if(c.deleting)$('#manageBtn').click();}catch(e){status('#classesStatus',friendly(e),true);status('#lobbyStatus',friendly(e),true);}finally{btn.disabled=false;}};return btn;}
-function updateLobbyListHint(){
- const host=$('#lobbyClasses'),hint=$('#lobbyListHint'),overflow=host.scrollHeight>host.clientHeight+2;hint.hidden=!overflow;host.tabIndex=overflow?0:-1;if(overflow)host.setAttribute('aria-describedby','lobbyListHint');else host.removeAttribute('aria-describedby');
+let lobbyVisiting=false;
+function updateLobbyActions(){
+ const ready=classesLoaded&&!entryError&&!preview,selected=listedClasses().find(c=>c.id===$('#lobbyClassSelect').value);
+ $('#lobbyClassSelect').disabled=!ready||!listedClasses().length||lobbyVisiting;
+ $('#lobbyVisitBtn').disabled=!ready||!selected||lobbyVisiting;
+ $('#lobbyStudentBtn').disabled=!ready||!store.user||!classes.some(c=>!c.deleting)||lobbyVisiting;
 }
 function renderLobby(){
- const visible=listedClasses(),host=$('#lobbyClasses'),scrollTop=host.scrollTop;host.replaceChildren();for(const c of visible)host.append(classCard(c));host.scrollTop=scrollTop;
+ const visible=listedClasses(),select=$('#lobbyClassSelect'),selection=select.value,placeholder=element('option','학급 선택하기');placeholder.value='';select.replaceChildren(placeholder);
+ for(const c of visible){const option=element('option',c.name+(c.deleting?' · 삭제 정리 중':` · ${classCapacity(c)}개 전시 자리`));option.value=c.id;select.append(option);}select.value=visible.some(c=>c.id===selection)?selection:'';
  $('#lobbyTotal').hidden=!classesLoaded||!visible.length||!!entryError;$('#lobbyTotal').textContent=visible.length+'개 학급';$('#lobbyEmpty').hidden=!classesLoaded||visible.length>0||!!entryError;$('#lobbyRetry').hidden=!entryError;$('#lobbyTeacherBtn').disabled=!classesLoaded;$('#lobbyTeacherBtn').textContent=store.canCreateClass()&&!preview?'내 학급 도서관 개설하기 →':'선생님 · 학급 개설하기 →';
- status('#lobbyStatus',entryError||(classesLoaded?(visible.length?'아래 목록에서 방문할 학급을 눌러 주세요.':'선생님이 첫 학급 도서관을 개설해 주세요.'):'학급 도서관을 불러오고 있어요…'),!!entryError);queueMicrotask(updateLobbyListHint);
+ status('#lobbyStatus',entryError||(classesLoaded?(visible.length?'학급 선택하기를 눌러 주세요.':'선생님이 첫 학급 도서관을 개설해 주세요.'):'학급 도서관을 불러오고 있어요…'),!!entryError);updateLobbyActions();
 }
-if(typeof ResizeObserver!=='undefined'){const listObserver=new ResizeObserver(updateLobbyListHint);listObserver.observe($('#lobbyClasses'));}document.fonts?.ready.then(updateLobbyListHint);
+$('#lobbyClassSelect').onchange=updateLobbyActions;
+$('#lobbyVisitBtn').onclick=async()=>{
+ const c=listedClasses().find(c=>c.id===$('#lobbyClassSelect').value);if(!c||lobbyVisiting)return;lobbyVisiting=true;updateLobbyActions();
+ try{await selectClass(c);enterExhibition();if(c.deleting)$('#manageBtn').click();}catch(e){status('#lobbyStatus',friendly(e),true);}finally{lobbyVisiting=false;updateLobbyActions();}
+};
 function openClassSetup(){
  creationIntent=true;if(store.canCreateClass()&&!preview){creationIntent=false;$('#manager').close();renderClasses();openDialog('#classesDialog');$('#createClassForm input[name=name]').focus();return;}
  $('#classesDialog').close();$('#manageBtn').click();
@@ -85,4 +94,4 @@ async function authChanged(){
 }
 showLobby(true);renderClasses();try{await store.init(authChanged);if(store.mode==='local'){preview=false;await authChanged();}else renderManager();}catch(e){entryError='학급 도서관에 연결하지 못했어요. '+friendly(e);renderLobby();$('#saveState').textContent='연결 오류';$('#storageNote').textContent='공유 저장소에 연결하지 못했습니다. 새로고침 후 다시 시도해 주세요.';}
 
-setupManagement({store,inspectPDF,read,openDialog,status,friendly,getCurrent:()=>current,getClasses:()=>classes,refresh:authChanged,renderManager});
+setupManagement({store,inspectPDF,read,openDialog,status,friendly,getCurrent:()=>current,getClasses:()=>classes,getEntryClass:()=>classes.find(c=>!c.deleting&&c.id===$('#lobbyClassSelect').value),refresh:authChanged,renderManager});
