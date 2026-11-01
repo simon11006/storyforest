@@ -3,12 +3,13 @@ service firebase.storage {
  match /b/{bucket}/o {
   function role(s){return request.auth!=null && request.auth.token.email_verified==true ? firestore.get(/databases/(default)/documents/schools/$(s)/members/$(request.auth.token.email)).data.role : '';}
   function manages(s,c){return role(s)=='admin' || (role(s)=='teacher' && firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.teacherEmail==request.auth.token.email);}
+  function capacity(s,c){return firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.get('capacity',30);}
   function valid(file){return (file=='book.pdf' && request.resource.size<=104857600 && request.resource.contentType=='application/pdf') || (file=='cover.jpg' && request.resource.size<=2097152 && request.resource.contentType=='image/jpeg');}
   match /schools/{s}/classes/{c}/{book}/{file}{
    function published(){let slot=resource.metadata.slot;let b=firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)/books/$(slot)).data;return b.pdfPath=='schools/'+s+'/classes/'+c+'/'+book+'/'+file || b.coverPath=='schools/'+s+'/classes/'+c+'/'+book+'/'+file;}
    function own(){return request.auth!=null && book.matches(request.auth.uid+'_[^/]+');}
    allow read: if published() || manages(s,c);
-   allow create: if valid(file) && request.resource.metadata.slot.matches('^([1-9]|[12][0-9]|30)$') && (manages(s,c) || (own() && firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.autoPublish==true && firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.accepting==true));
+   allow create: if valid(file) && request.resource.metadata.slot.matches('^([1-9]|[12][0-9]|30)$') && int(request.resource.metadata.slot)<=capacity(s,c) && (manages(s,c) || (own() && firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.autoPublish==true && firestore.get(/databases/(default)/documents/schools/$(s)/classes/$(c)).data.accepting==true));
    allow delete: if manages(s,c) || (own() && (!firestore.exists(/databases/(default)/documents/schools/$(s)/classes/$(c)/books/$(resource.metadata.slot)) || !published()));
   }
   match /schools/{s}/incoming/{c}/{uid}/{file}{

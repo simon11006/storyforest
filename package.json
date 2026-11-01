@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node serve.mjs",
     "build": "node build.mjs",
-    "check": "node --check src/main.js && node --check src/store.js && node --check src/gallery.js && node --check src/reader.js"
+    "check": "node --check src/main.js && node --check src/store.js && node --check src/gallery.js && node --check src/reader.js && node --check src/management.js && node --check src/capacity.js",
+    "test": "node tests.mjs && node tests-management.mjs"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,8 @@
     "@grpc/grpc-js": "^1.13.6"
   },
   "devDependencies": {
-    "esbuild": "^0.28.2"
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.1.3"
   }
 }

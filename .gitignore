@@ -14,3 +14,10 @@ dist/books/
 .env.*
 *service-account*.json
 *.pem
+
+# Student work stays in Firebase, not public Git history.
+dist/books/
+.env
+.env.*
+*service-account*.json
+*.pem

@@ -1,0 +1,41 @@
+// Run with: firebase emulators:exec --only firestore,storage --project demo-storyforest-capacity --config firebase/emulators.json "node tests-rules.mjs"
+import fs from 'node:fs';
+import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
+import {doc,setDoc,updateDoc} from 'firebase/firestore';
+import {ref,uploadBytes} from 'firebase/storage';
+import {LibraryStore} from './src/store.js';
+import assert from 'node:assert/strict';
+const projectId='demo-storyforest-capacity';
+const env=await initializeTestEnvironment({projectId,firestore:{host:'127.0.0.1',port:8086,rules:fs.readFileSync('firebase/firestore.rules','utf8')},storage:{host:'127.0.0.1',port:9196,rules:fs.readFileSync('firebase/storage.rules','utf8')}});
+const base='schools/test/classes/',teacherEmail='teacher@example.com';
+const context=(uid,email)=>env.authenticatedContext(uid,email?{email,email_verified:true}:{});
+const teacher=context('teacher',teacherEmail),admin=context('admin','endeavor1006@naver.com'),other=context('other','other@example.com'),student=context('student');
+const data={name:'20명 학급',teacherEmail,createdAt:1,accepting:true,autoPublish:true,capacity:20};
+const book=(slot,c='twenty',owner='student_works')=>({slot,title:'테스트 작품',author:'작가',pages:1,bytes:10,createdAt:1,pdfPath:`${base}${c}/${owner}/book.pdf`,coverPath:`${base}${c}/${owner}/cover.jpg`});
+try{
+ await env.clearFirestore();await env.clearStorage();
+ await env.withSecurityRulesDisabled(async c=>{const db=c.firestore();for(const [email,role]of [[teacherEmail,'teacher'],['other@example.com','teacher'],['endeavor1006@naver.com','admin']])await setDoc(doc(db,'schools/test/members/'+email),{role});await setDoc(doc(db,base+'twenty'),data);const{capacity,...legacy}=data;await setDoc(doc(db,base+'legacy'),legacy);await setDoc(doc(db,base+'review'),{...data,autoPublish:false});});
+ const own=doc(teacher.firestore(),base+'twenty');
+ await assertSucceeds(updateDoc(own,{capacity:19}));await assertSucceeds(updateDoc(own,{capacity:20}));
+ for(const capacity of [0,31,20.5,'20'])await assertFails(updateDoc(own,{capacity}));
+ await assertFails(updateDoc(doc(other.firestore(),base+'twenty'),{capacity:10}));
+ await assertFails(updateDoc(own,{teacherEmail:'other@example.com'}));
+ await assertFails(setDoc(doc(teacher.firestore(),base+'teacher-created'),data));
+ await assertSucceeds(setDoc(doc(admin.firestore(),base+'admin-created'),{...data,capacity:20}));
+ await assertSucceeds(setDoc(doc(student.firestore(),base+'twenty/books/20'),book(20)));
+ await assertFails(setDoc(doc(student.firestore(),base+'twenty/books/21'),book(21)));
+ await assertFails(setDoc(doc(teacher.firestore(),base+'twenty/books/21'),book(21)));
+ await assertSucceeds(setDoc(doc(teacher.firestore(),base+'legacy/books/30'),book(30,'legacy')));
+ await assertFails(setDoc(doc(student.firestore(),base+'review/books/1'),book(1,'review')));
+ const submission={title:'대기 작품',author:'작가',pages:1,bytes:10,createdAt:1,pdfPath:'schools/test/incoming/review/student/book.pdf',coverPath:'schools/test/incoming/review/student/cover.jpg'};
+ await assertSucceeds(setDoc(doc(student.firestore(),base+'review/submissions/student'),submission));
+ await assertSucceeds(updateDoc(own,{accepting:false}));await assertFails(setDoc(doc(student.firestore(),base+'twenty/books/1'),book(1)));await assertSucceeds(setDoc(doc(teacher.firestore(),base+'twenty/books/1'),book(1)));
+ await assertSucceeds(updateDoc(own,{accepting:true}));
+ const store=new LibraryStore();store.mode='firebase';store.firestore=teacher.firestore()._delegate;store.school='test';store.role='teacher';store.user={email:teacherEmail};
+ await assert.rejects(()=>store.updateClass({id:'twenty'},{capacity:19}),/20번/);
+ const upload=(ctx,slot,c='twenty',owner='student_works')=>uploadBytes(ref(ctx.storage(),`${base}${c}/${owner}/book.pdf`),new Uint8Array([1,2,3]),{contentType:'application/pdf',customMetadata:{slot:String(slot)}});
+ await assertSucceeds(upload(student,19));await assertFails(upload(student,21));await assertFails(upload(teacher,21,'twenty','teacher-works'));
+ await assertSucceeds(upload(teacher,30,'legacy','teacher-legacy'));
+ await assertSucceeds(updateDoc(own,{accepting:false}));await assertFails(upload(student,18,'twenty','student_closed'));await assertSucceeds(upload(teacher,18,'twenty','teacher-closed'));
+ console.log('PASS Firestore/Storage capacity limits, legacy defaults, teacher ownership, review/closed submissions, and safe reductions');
+}finally{await env.cleanup();}
