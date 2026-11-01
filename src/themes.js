@@ -11,9 +11,10 @@ export function classTheme(c){let hash=0;for(const ch of c?.name||c?.id||'이야
 export function applyClassTheme(g,c){
  if(!g.renderer)return;
  const t=classTheme(c),e=g.environment;
- e.wall.color.set(t.wall);e.ceiling.color.set(t.ceiling);e.gold.color.set(t.accent);
+ // Keep the timber library architecture legible across classroom themes.
+ e.wall.color.set('#275954');e.ceiling.color.set('#c7b994');e.gold.color.set('#d8ae63');
  e.carpets.forEach(m=>m.color.set(t.carpet));e.lights.forEach(l=>l.color.set(t.light));e.fill.color.set(t.fill);
- g.scene.background.set(t.ceiling);g.scene.fog.color.set(t.wall);g.fireflies.material.color.set(t.accent);
+ g.scene.background.set('#8d9e94');g.scene.fog.color.set('#a9b2a3');g.scene.fog.near=55;g.scene.fog.far=130;g.fireflies.material.color.set(t.accent);
  e.leaves.visible=t.kind==='forest'||t.kind==='blossom';e.leaves.material.color.set(t.kind==='blossom'?'#e8a8c1':'#497554');
  if(g.classDecor){g.classDecor.traverse(o=>{o.geometry?.dispose();if(o.material){o.material.map?.dispose();o.material.dispose();}});g.scene.remove(g.classDecor);}
  const group=new THREE.Group();g.classDecor=group;g.scene.add(group);

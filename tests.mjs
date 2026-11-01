@@ -16,7 +16,7 @@ for(let i=1;i<=8;i++){
  const cls={id:`class-${i}`,name:`3학년 ${i}반`};gallery.setClass(cls);
  seen.add(classTheme(cls).kind);
  assert.equal(gallery.scene.children.length,roomObjects+1,'old classroom decorations must be removed');
- assert.equal(gallery.environment.wall.color.getHexString(),classTheme(cls).wall.slice(1));
+ assert.equal(gallery.environment.wall.color.getHexString(),'275954');assert.equal(gallery.environment.ceiling.color.getHexString(),'c7b994');assert.ok(gallery.scene.getObjectByName('library-vault'));assert.ok(gallery.scene.getObjectByName('library-left-wall'));assert.ok(gallery.scene.getObjectByName('library-right-wall'));for(const name of ['library-floor','library-vault','library-left-wall','library-right-wall'])assert.equal(gallery.scene.getObjectByName(name).frustumCulled,false,'the enclosing room must remain visible');
  assert.equal(gallery.classDecor.children.filter(o=>o.material?.map).length,2,'sign is readable from both sides');
  const count=gallery.classDecor.children.length;gallery.setClass(cls);assert.equal(gallery.classDecor.children.length,count);
 }
@@ -59,3 +59,5 @@ exhibition.setClass({id:'seven',capacity:7});exhibition.setBooks([]);assert.equa
 exhibition.near={slot:20};exhibition.renderer=null;exhibition.setBooks([{slot:1},{slot:20}]);assert.deepEqual(exhibition.books,[{slot:1}]);assert.equal(exhibition.near,null,'retained books must not be reachable through the nearby-book action');
 console.log('PASS per-class capacity, retained books after reductions, restored exhibits, stale settings, and exact 3D frame counts');
 s.mode='firebase';s.role='teacher';s.user={email:'teacher@example.com'};assert.equal(s.manages({teacherEmail:'teacher@example.com'}),true);assert.equal(s.manages({teacherEmail:'other@example.com'}),false);s.role='student';assert.equal(s.manages({teacherEmail:'teacher@example.com'}),false);s.isAdmin=true;assert.equal(s.manages({teacherEmail:'other@example.com'}),true);console.log('PASS class ownership and super administrator UI permissions');
+
+s.mode='local';const doomed=await s.addClass('작품이 있는 학급',3);await s.addBook(doomed.id,{slot:1,title:'삭제할 책',author:'작가'});s.memory.submissions=new Map([['pending',{classId:doomed.id}],['other',{classId:'class-a'}]]);await s.deleteClass(doomed);assert.equal(await s.getClass(doomed.id),undefined);assert.equal((await s.books(doomed.id)).length,0);assert.equal(s.memory.submissions.has('pending'),false);assert.equal(s.memory.submissions.has('other'),true);assert.equal((await s.books('class-a')).length,1);console.log('PASS local populated-class cascade and classroom isolation');

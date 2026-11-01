@@ -4,16 +4,16 @@ import * as THREE from 'three';
 export function buildForest(g) {
  const scene=g.scene, mat=(c,o)=>g.material(c,o), box=(...a)=>g.box(...a);
  const wood=mat('#684632'), gold=mat('#d8ae63',{metalness:.65,roughness:.32}), stone=mat('#dfd6bd'), teal=mat('#275954');
- const carpets=[],lights=[];const ceiling=mat('#203d42',{side:THREE.DoubleSide,roughness:.8});
+ const carpets=[],lights=[];const ceiling=mat('#c7b994',{side:THREE.DoubleSide,roughness:.8});
  const glow=new THREE.MeshBasicMaterial({color:'#ffe4a0'});
  const mesh=(geo,m,x,y,z)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.receiveShadow=true;scene.add(o);return o;};
  const floorMap=g.texture((c,w,h)=>{c.fillStyle='#a78056';c.fillRect(0,0,w,h);for(let y=0;y<h;y+=128){c.fillStyle=['#aa8259','#b58e64','#9f7953','#b08c62'][y/128%4];c.fillRect(0,y,w,126);for(let i=0;i<35;i++){c.strokeStyle='#5b382c15';c.beginPath();c.moveTo(0,y+i*3.6);c.bezierCurveTo(300,y+i*3.6+5,700,y+i*3.6-6,w,y+i*3.6);c.stroke();}c.fillStyle='#60433255';c.fillRect(y%256?200:700,y,2,128);}});
  floorMap.wrapS=floorMap.wrapT=THREE.RepeatWrapping;floorMap.repeat.set(4,10);
- const floor=mesh(new THREE.PlaneGeometry(20,49),mat('#ffffff',{map:floorMap,roughness:.55}),0,0,0);floor.rotation.x=-Math.PI/2;
- for(const x of [-10,10]){box(.4,5.8,49,x,2.9,0,teal);box(.15,.22,49,x*.978,.22,0,gold);box(.15,.18,49,x*.978,4.7,0,gold);}
+ const floor=mesh(new THREE.PlaneGeometry(20,49),mat('#ffffff',{map:floorMap,roughness:.55}),0,0,0);floor.rotation.x=-Math.PI/2;floor.name='library-floor';
+ for(const x of [-10,10]){const wall=box(.4,5.8,49,x,2.9,0,teal);wall.name=x<0?'library-left-wall':'library-right-wall';box(.15,.22,49,x*.978,.22,0,gold);box(.15,.18,49,x*.978,4.7,0,gold);}
  // Vaulted timber ribs and a translucent blue-green canopy.
  const vaultVertices=[],vaultIndices=[];for(let i=0;i<=48;i++){const a=i/48*Math.PI;for(const z of [-24.5,24.5])vaultVertices.push(Math.cos(a)*10.2,4.6+Math.sin(a)*4.35,z);if(i<48){const k=i*2;vaultIndices.push(k,k+1,k+2,k+1,k+3,k+2);}}
- const vault=new THREE.BufferGeometry();vault.setAttribute('position',new THREE.Float32BufferAttribute(vaultVertices,3));vault.setIndex(vaultIndices);vault.computeVertexNormals();mesh(vault,ceiling,0,0,0);
+ const vault=new THREE.BufferGeometry();vault.setAttribute('position',new THREE.Float32BufferAttribute(vaultVertices,3));vault.setIndex(vaultIndices);vault.computeVertexNormals();mesh(vault,ceiling,0,0,0).name='library-vault';
  for(let z=-23;z<25;z+=5.4){const points=[];for(let i=0;i<=32;i++){const a=i/32*Math.PI;points.push(new THREE.Vector3(Math.cos(a)*9.8,4.5+Math.sin(a)*4.2,z));}mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),40,.12,6,false),wood,0,0,0);for(const x of [-9.7,9.7])box(.24,4.6,.25,x,2.3,z,wood);}
  for(const x of [-6.5,-3.3,0,3.3,6.5])box(.09,.09,48,x,4.5+Math.sqrt(1-(x/9.8)**2)*4.2,0,gold);
  const themes=['#4b8171','#7484a8','#bb8359'];
@@ -66,4 +66,7 @@ export function buildForest(g) {
  scene.background=new THREE.Color('#203d42');scene.fog=new THREE.Fog('#294b48',28,85);
  scene.add(new THREE.HemisphereLight('#e2f4ef','#775332',2.5));const sun=new THREE.DirectionalLight('#ffdfad',3);sun.position.set(-5,12,20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-14,right:14,top:29,bottom:-29,near:1,far:80});sun.shadow.normalBias=.035;sun.target.position.set(0,0,-8);scene.add(sun,sun.target);
  const fill=new THREE.DirectionalLight('#96d7dd',1.8);fill.position.set(5,6,-20);scene.add(fill);lights.push(sun);g.environment={wall:teal,ceiling,gold,carpets,lights,fill,leaves};
+ // This fixed room surrounds the viewer. Keep its enclosing architecture visible
+ // at the entrance and while turning; exhibition frames retain normal culling.
+ scene.traverse(object=>{if(object.isMesh)object.frustumCulled=false;});
 }
