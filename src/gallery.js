@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import {buildForest} from './forest.js';
+import {applyClassTheme} from './themes.js';
 export function slotPosition(slot){const row=Math.floor((slot-1)/2);return{x:slot%2?-8.7:8.7,z:19-row*2.7,rotation:slot%2?Math.PI/2:-Math.PI/2};}
-export function canStand(x,z){for(const px of [-6.7,6.7])for(const pz of [19.8,6.3,-7.2])if(Math.abs(x-px)<.65&&Math.abs(z-pz)<.7)return false;for(const px of [-7.2,7.2])for(const pz of [22.5,13.5,0,-13.5,-22])if(Math.hypot(x-px,z-pz)<.7)return false;if(x< -9||x>9||z< -21||z>23)return false;for(const bz of [11,-3,-17])for(const bx of [-4.3,4.3])if(Math.abs(x-bx)<1.85&&Math.abs(z-bz)<.85)return false;return true;}
+export function canStand(x,z){if(Math.abs(x)<2.15&&Math.abs(z-16.5)<.8)return false;for(const px of [-6.7,6.7])for(const pz of [19.8,6.3,-7.2])if(Math.abs(x-px)<.65&&Math.abs(z-pz)<.7)return false;for(const px of [-7.2,7.2])for(const pz of [22.5,13.5,0,-13.5,-22])if(Math.hypot(x-px,z-pz)<.7)return false;if(x< -9||x>9||z< -21||z>23)return false;for(const bz of [11,-3,-17])for(const bx of [-4.3,4.3])if(Math.abs(x-bx)<1.85&&Math.abs(z-bz)<.85)return false;return true;}
 export class Gallery{
  constructor(host,{onRead,onZone,onNear,onMove,onError}){this.host=host;this.events={onRead,onZone,onNear,onMove,onError};this.books=[];this.keys=new Set();this.yaw=0;this.pitch=0;this.active=false;this.near=null;this.frames=[];this.textures=[];this.art=new THREE.Group();this.ray=new THREE.Raycaster();this.pointer=new THREE.Vector2();this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#c5d2c7');this.scene.fog=new THREE.Fog('#cbd1c5',35,100);this.camera=new THREE.PerspectiveCamera(60,1,.1,180);this.camera.rotation.order='YXZ';
  try{this.renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});}catch(e){onError?.(e);return;}
@@ -11,6 +12,7 @@ export class Gallery{
  texture(draw,w=1024,h=1024){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;}
  label(text,w,h,{color='#506451',background='#eeeade',font=50}={}){const t=this.texture((c,cw,ch)=>{c.fillStyle=background;c.fillRect(0,0,cw,ch);c.fillStyle=color;c.textAlign='center';c.textBaseline='middle';c.font=`500 ${font*1.8}px "Malgun Gothic",sans-serif`;c.fillText(text,cw/2,ch/2,cw-40);},1024,256);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t,toneMapped:false}));return m;}
  buildRoom(){buildForest(this);}
+ setClass(c){applyClassTheme(this,c);}
  plant(x,z,s){const pot=new THREE.Mesh(new THREE.CylinderGeometry(.45*s,.35*s,.75*s,24),this.material('#c6c3ac'));pot.position.set(x,.375*s,z);pot.castShadow=true;this.scene.add(pot);const stem=this.material('#6b7251'),leaf=this.material('#647f58',{side:THREE.DoubleSide});for(let i=0;i<7;i++){const a=i*2.4;const branch=new THREE.Mesh(new THREE.CylinderGeometry(.015,.02,1.2+i*.12,6),stem);branch.position.set(x+Math.sin(a)*.15,1.1+i*.09,z+Math.cos(a)*.15);branch.rotation.z=Math.sin(a)*.2;this.scene.add(branch);const l=new THREE.Mesh(new THREE.SphereGeometry(.32,12,8),leaf);l.scale.set(1,.25,1.7);l.position.set(x+Math.sin(a)*.36,1.65+i*.11,z+Math.cos(a)*.36);l.rotation.set(.4,a,.3);l.castShadow=true;this.scene.add(l);}}
  tree(x,z,s){const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12*s,.16*s,2.8*s,7),this.material('#7c8063'));trunk.position.set(x,1.4*s,z);this.scene.add(trunk);for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.3*s,2),this.material(['#839a78','#9caf89','#758f70'][j]));crown.position.set(x+Math.sin(j*2)*s*.5,2.8*s+j*.4,z+Math.cos(j*2)*s*.3);this.scene.add(crown);}}
  setBooks(books){this.books=books;if(!this.renderer)return;this.frames=[];this.art.traverse(o=>{if(o.isMesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>{m.map?.dispose();m.dispose();});}});this.art.clear();this.renderer.shadowMap.needsUpdate=true;const loader=new THREE.TextureLoader();const generation=(this.bookGeneration||0)+1;this.bookGeneration=generation;
@@ -21,7 +23,7 @@ export class Gallery{
  else{const number=this.label(String(slot).padStart(2,'0'),1.0,.55,{font:128,color:'#e4c893',background:'#385e57'});number.position.set(0,2.35,.02);g.add(number);const sub=this.label('YOUR STORY HERE',1.3,.18,{font:42,color:'#c2d5b9',background:'#385e57'});sub.position.set(0,1.88,.02);g.add(sub);}
  }
  }
- reset(){this.camera.position.set(-.6,1.7,23);this.yaw=-.18;this.pitch=.12;this.keys.clear();this.updateCamera();}
+ reset(){this.camera.position.set(0,1.7,23);this.yaw=0;this.pitch=.06;this.keys.clear();this.updateCamera();}
  zone(n){this.pause();this.active=true;this.camera.position.set(0,1.7,21-n*13.5);this.yaw=0;this.pitch=0;this.updateCamera();}
  focusBook(book){const p=slotPosition(book.slot);this.pause();this.active=true;this.camera.position.set(p.x+(book.slot%2?1.9:-1.9),2.1,p.z);this.yaw=book.slot%2?Math.PI/2:-Math.PI/2;this.pitch=.06;this.updateCamera();}
  updateCamera(){this.camera.rotation.set(this.pitch,this.yaw,0,'YXZ');}
