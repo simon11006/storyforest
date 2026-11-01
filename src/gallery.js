@@ -1,3 +1,4 @@
+import {youtubeLink} from './video.js';
 import * as THREE from 'three';
 import {buildForest} from './forest.js';
 import {applyClassTheme,buildExhibitFrame} from './themes.js';
@@ -20,7 +21,7 @@ export class Gallery{
  for(let slot=1;slot<=(this.capacity??30);slot++){const b=books.find(b=>b.slot===slot),pos=slotPosition(slot),g=new THREE.Group();g.position.set(pos.x,0,pos.z);g.rotation.y=pos.rotation;this.art.add(g);
  buildExhibitFrame(this,g,!!b);const theme=this.theme;
  const label=this.label(`${String(slot).padStart(2,'0')}   /   ${b?b.author+' 작가':'새로운 이야기를 기다려요'}`,1.8,.3,{font:45,background:theme.pale,color:theme.wood});label.position.set(0,.67,.055);g.add(label);
- if(b){this.box(1.47,2.03,.09,0,2.27,.075,this.material(theme.accent),g);this.box(1.39,1.95,.025,0,2.27,.13,this.material('#fffdf7'),g);const art=new THREE.Mesh(new THREE.PlaneGeometry(1.29,1.83),new THREE.MeshBasicMaterial({color:'#fffdf8',toneMapped:false}));art.position.set(0,2.27,.15);art.userData.book=b;g.add(art);this.frames.push(art);loader.load(b.cover,t=>{if(this.bookGeneration!==generation){t.dispose();return;}t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());art.material.map=t;art.material.needsUpdate=true;},undefined,()=>{});const title=this.label(b.title,1.8,.26,{font:43,background:theme.pale,color:theme.wood});title.position.set(0,1.08,.06);g.add(title);}
+ if(b){let hasVideo=false;try{hasVideo=!!youtubeLink(b.youtubeUrl);}catch{}if(hasVideo){this.box(1.32,.38,.035,0,3.52,.075,this.material(theme.accent),g);const badge=this.label('▶ 영상북',1.25,.31,{font:65,background:'#7b3928',color:'#fff3d7'});badge.name='video-book-badge';badge.position.set(0,3.52,.1);g.add(badge);}this.box(1.47,2.03,.09,0,2.27,.075,this.material(theme.accent),g);this.box(1.39,1.95,.025,0,2.27,.13,this.material('#fffdf7'),g);const art=new THREE.Mesh(new THREE.PlaneGeometry(1.29,1.83),new THREE.MeshBasicMaterial({color:'#fffdf8',toneMapped:false}));art.position.set(0,2.27,.15);art.userData.book=b;g.add(art);this.frames.push(art);loader.load(b.cover,t=>{if(this.bookGeneration!==generation){t.dispose();return;}t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());art.material.map=t;art.material.needsUpdate=true;},undefined,()=>{});const title=this.label(b.title,1.8,.26,{font:43,background:theme.pale,color:theme.wood});title.position.set(0,1.08,.06);g.add(title);}
  else{const number=this.label(String(slot).padStart(2,'0'),1.0,.55,{font:128,color:theme.accent,background:theme.frame});number.position.set(0,2.35,.02);g.add(number);const sub=this.label('YOUR STORY HERE',1.3,.18,{font:42,color:theme.pale,background:theme.frame});sub.position.set(0,1.88,.02);g.add(sub);}
  }
  }
