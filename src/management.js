@@ -10,7 +10,7 @@ export function setupManagement({store,inspectPDF,read,openDialog,status,friendl
  const field=(text,input)=>{const label=el('label',text);label.className='class-setting';label.append(input);return label;};
  function capacityField(c){const input=el('input');input.type='number';input.min='1';input.max='30';input.step='1';input.required=true;input.value=classCapacity(c);input.setAttribute('aria-label',c.name+' 전시할 작품 수');return input;}
  function submissionField(c){const input=el('input');input.type='checkbox';input.checked=c.accepting===true;const label=el('label');label.className='submission-toggle';label.append(input,document.createTextNode('학생 작품 제출 허용'));return{input,label};}
- const capacityNote=()=>el('p','학생 1명당 1개 작품을 전시하려면 학생 수를 입력하세요. 1~30개까지 설정할 수 있으며, 20개로 정하면 전시 자리도 20개가 됩니다. 작품이 있는 자리보다 작은 수로는 줄일 수 없습니다.');
+ const capacityNote=()=>el('p','학생 1명당 1개 작품을 전시하려면 학생 수를 입력하세요. 기존 학급도 20개로 저장하면 전시 자리가 20개만 보입니다. 1~30개까지 설정할 수 있습니다. 줄인 범위 밖의 작품은 삭제하지 않고 보관하며, 숫자를 다시 늘리면 해당 자리의 작품이 다시 나타납니다.');
  const submissionNote=()=>el('p','체크하면 학생이 ‘내 책 올리기’로 새 작품을 제출할 수 있습니다. 체크를 해제하면 새 제출만 중단되고, 이미 전시된 작품과 승인 대기 작품은 유지됩니다. 교사는 계속 직접 전시할 수 있습니다.');
  function renderPolicy(){
   const c=getCurrent();policy.replaceChildren();policy.hidden=!c||!store.manages(c);if(policy.hidden)return;

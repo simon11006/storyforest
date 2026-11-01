@@ -1,7 +1,7 @@
 // Run with: firebase emulators:exec --only firestore,storage --project demo-storyforest-capacity --config firebase/emulators.json "node tests-rules.mjs"
 import fs from 'node:fs';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
-import {doc,setDoc,updateDoc} from 'firebase/firestore';
+import {doc,setDoc,updateDoc,getDoc} from 'firebase/firestore';
 import {ref,uploadBytes} from 'firebase/storage';
 import {LibraryStore} from './src/store.js';
 import assert from 'node:assert/strict';
@@ -32,10 +32,10 @@ try{
  await assertSucceeds(updateDoc(own,{accepting:false}));await assertFails(setDoc(doc(student.firestore(),base+'twenty/books/1'),book(1)));await assertSucceeds(setDoc(doc(teacher.firestore(),base+'twenty/books/1'),book(1)));
  await assertSucceeds(updateDoc(own,{accepting:true}));
  const store=new LibraryStore();store.mode='firebase';store.firestore=teacher.firestore()._delegate;store.school='test';store.role='teacher';store.user={email:teacherEmail};
- await assert.rejects(()=>store.updateClass({id:'twenty'},{capacity:19}),/20번/);
+ await assertSucceeds(store.updateClass({id:'twenty'},{capacity:19}));assert.equal((await store.getClass('twenty')).capacity,19);assert.equal((await getDoc(doc(teacher.firestore(),base+'twenty/books/20'))).exists(),true,'reducing an existing class retains its books');await store.updateClass({id:'twenty'},{capacity:20});
  const upload=(ctx,slot,c='twenty',owner='student_works')=>uploadBytes(ref(ctx.storage(),`${base}${c}/${owner}/book.pdf`),new Uint8Array([1,2,3]),{contentType:'application/pdf',customMetadata:{slot:String(slot)}});
  await assertSucceeds(upload(student,19));await assertFails(upload(student,21));await assertFails(upload(teacher,21,'twenty','teacher-works'));
  await assertSucceeds(upload(teacher,30,'legacy','teacher-legacy'));
  await assertSucceeds(updateDoc(own,{accepting:false}));await assertFails(upload(student,18,'twenty','student_closed'));await assertSucceeds(upload(teacher,18,'twenty','teacher-closed'));
- console.log('PASS Firestore/Storage capacity limits, legacy defaults, teacher ownership, review/closed submissions, and safe reductions');
+ console.log('PASS Firestore/Storage capacity limits, legacy defaults, teacher ownership, review/closed submissions, and retained works after reductions');
 }finally{await env.cleanup();}

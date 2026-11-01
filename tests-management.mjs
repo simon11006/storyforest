@@ -11,6 +11,8 @@ setupManagement({store,getCurrent:()=>cls,getClasses:()=>[cls],refresh:async()=>
 $('#manageBtn').click();await tick();
 assert.equal($('#classPolicy input[type=number]').value,'20');
 assert.match($('#classPolicy').textContent,/새 제출만 중단/);
+assert.match($('#classPolicy').textContent,/기존 학급도 20개로 저장하면 전시 자리가 20개만/);
+assert.match($('#classPolicy').textContent,/삭제하지 않고 보관/);
 const reviewSlots=$('#submissionList select');assert.equal(reviewSlots.options.length,1);assert.equal(reviewSlots.value,'20');
 $('#classPolicy input[type=number]').value='12';$('#classPolicy input[type=checkbox]').checked=false;await $('#classPolicy button').onclick();
 assert.equal(saved.capacity,12);assert.equal(saved.accepting,false);assert.equal(saved.autoPublish,false);

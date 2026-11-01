@@ -7,7 +7,7 @@
     "start": "node serve.mjs",
     "build": "node build.mjs",
     "check": "node --check src/main.js && node --check src/store.js && node --check src/gallery.js && node --check src/reader.js && node --check src/management.js && node --check src/capacity.js",
-    "test": "node tests.mjs && node tests-management.mjs"
+    "test": "node tests.mjs && node tests-management.mjs && node tests-existing-class.mjs"
   },
   "keywords": [],
   "author": "",
