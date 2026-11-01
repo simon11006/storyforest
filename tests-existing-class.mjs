@@ -29,6 +29,8 @@ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 try{
  await new AsyncFunction('LibraryStore','Gallery','Reader','inspectPDF','setupManagement','classCapacity','availableSlots','exhibitedBooks',source)(TestStore,TestGallery,TestReader,()=>{},setupManagement,classCapacity,availableSlots,exhibitedBooks);
  const $=s=>document.querySelector(s),tick=()=>new Promise(resolve=>setTimeout(resolve,0));
+ assert.equal($('#entryLobby').hidden,false);assert.equal($('#bookCount').textContent,'0','a class must not be selected automatically');
+ assert.equal(document.querySelectorAll('#lobbyClasses .class-card').length,1);await $('#lobbyClasses .class-card').onclick();assert.equal($('#entryLobby').hidden,true);
  $('#manageBtn').click();await tick();
  assert.equal($('#bookCount').textContent,'30');assert.equal(document.querySelectorAll('.book-tile').length,30);
  $('#classPolicy input[type=number]').value='20';await $('#classPolicy button').onclick();await tick();

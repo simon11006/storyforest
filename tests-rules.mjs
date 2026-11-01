@@ -1,7 +1,7 @@
 // Run with: firebase emulators:exec --only firestore,storage --project demo-storyforest-capacity --config firebase/emulators.json "node tests-rules.mjs"
 import fs from 'node:fs';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
-import {doc,setDoc,updateDoc,getDoc} from 'firebase/firestore';
+import {doc,setDoc,updateDoc,getDoc,deleteDoc} from 'firebase/firestore';
 import {ref,uploadBytes} from 'firebase/storage';
 import {LibraryStore} from './src/store.js';
 import assert from 'node:assert/strict';
@@ -20,7 +20,12 @@ try{
  for(const capacity of [0,31,20.5,'20'])await assertFails(updateDoc(own,{capacity}));
  await assertFails(updateDoc(doc(other.firestore(),base+'twenty'),{capacity:10}));
  await assertFails(updateDoc(own,{teacherEmail:'other@example.com'}));
- await assertFails(setDoc(doc(teacher.firestore(),base+'teacher-created'),data));
+ await assertSucceeds(setDoc(doc(teacher.firestore(),base+'teacher-created'),data));
+ await assertFails(setDoc(doc(teacher.firestore(),base+'wrong-owner'),{...data,teacherEmail:'other@example.com'}));
+ await assertFails(setDoc(doc(student.firestore(),base+'student-created'),data));
+ const unverified=env.authenticatedContext('unverified',{email:teacherEmail,email_verified:false});await assertFails(setDoc(doc(unverified.firestore(),base+'unverified'),data));
+ await assertFails(deleteDoc(doc(other.firestore(),base+'teacher-created')));await assertFails(deleteDoc(doc(student.firestore(),base+'teacher-created')));await assertFails(deleteDoc(doc(unverified.firestore(),base+'teacher-created')));
+ await assertSucceeds(deleteDoc(doc(teacher.firestore(),base+'teacher-created')));
  await assertSucceeds(setDoc(doc(admin.firestore(),base+'admin-created'),{...data,capacity:20}));
  await assertSucceeds(setDoc(doc(student.firestore(),base+'twenty/books/20'),book(20)));
  await assertFails(setDoc(doc(student.firestore(),base+'twenty/books/21'),book(21)));
@@ -31,7 +36,9 @@ try{
  await assertSucceeds(setDoc(doc(student.firestore(),base+'review/submissions/student'),submission));
  await assertSucceeds(updateDoc(own,{accepting:false}));await assertFails(setDoc(doc(student.firestore(),base+'twenty/books/1'),book(1)));await assertSucceeds(setDoc(doc(teacher.firestore(),base+'twenty/books/1'),book(1)));
  await assertSucceeds(updateDoc(own,{accepting:true}));
- const store=new LibraryStore();store.mode='firebase';store.firestore=teacher.firestore()._delegate;store.school='test';store.role='teacher';store.user={email:teacherEmail};
+ const store=new LibraryStore();store.mode='firebase';store.firestore=teacher.firestore()._delegate;store.school='test';store.role='teacher';store.user={email:teacherEmail,emailVerified:true};
+ const ownClass=await store.addClass('새 교사 학급',20);assert.equal(ownClass.teacherEmail,teacherEmail);await store.deleteClass(ownClass);assert.equal((await getDoc(doc(teacher.firestore(),base+ownClass.id))).exists(),false);
+ await env.withSecurityRulesDisabled(async ctx=>setDoc(doc(ctx.firestore(),base+'someone-else'),{...data,teacherEmail:'other@example.com'}));await assert.rejects(()=>store.deleteClass({id:'someone-else'}),/자기 학급/);await assert.rejects(()=>store.deleteClass({id:'twenty'}),/먼저 비워/);
  await assertSucceeds(store.updateClass({id:'twenty'},{capacity:19}));assert.equal((await store.getClass('twenty')).capacity,19);assert.equal((await getDoc(doc(teacher.firestore(),base+'twenty/books/20'))).exists(),true,'reducing an existing class retains its books');await store.updateClass({id:'twenty'},{capacity:20});
  const upload=(ctx,slot,c='twenty',owner='student_works')=>uploadBytes(ref(ctx.storage(),`${base}${c}/${owner}/book.pdf`),new Uint8Array([1,2,3]),{contentType:'application/pdf',customMetadata:{slot:String(slot)}});
  await assertSucceeds(upload(student,19));await assertFails(upload(student,21));await assertFails(upload(teacher,21,'twenty','teacher-works'));

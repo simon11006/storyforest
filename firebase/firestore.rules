@@ -17,9 +17,9 @@ service cloud.firestore {
   }
   match /schools/{s}/classes/{c}{
    allow read: if true;
-   allow create: if admin(s) && validClass();
+   allow create: if validClass() && (admin(s) || (role(s)=='teacher' && request.resource.data.teacherEmail==request.auth.token.email));
    allow update: if validClass() && (admin(s) || (manages(s,c) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','accepting','autoPublish','capacity'])));
-   allow delete: if admin(s);
+   allow delete: if manages(s,c);
    match /books/{slot}{
     allow read: if true;
     allow create: if (manages(s,c) || (signed() && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.autoPublish==true && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.accepting==true && request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/'+request.auth.uid+'_[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/'+request.auth.uid+'_[^/]+/cover.jpg'))) && slot.matches('^([1-9]|[12][0-9]|30)$') && int(slot)<=capacity(s,c) && request.resource.data.slot==int(slot) && validBook(request.resource.data)
