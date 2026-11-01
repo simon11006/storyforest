@@ -3,6 +3,7 @@ inputs/
 firebase-debug.log
 firestore-debug.log
 .firebase/
+.firebase-hosting/
 dist/books/*.pdf
 *.tar.gz
 *.tar
