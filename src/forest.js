@@ -17,7 +17,7 @@ export function buildForest(g) {
  for(let z=-23;z<25;z+=5.4){const points=[];for(let i=0;i<=32;i++){const a=i/32*Math.PI;points.push(new THREE.Vector3(Math.cos(a)*9.8,4.5+Math.sin(a)*4.2,z));}mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),40,.12,6,false),wood,0,0,0);for(const x of [-9.7,9.7])box(.24,4.6,.25,x,2.3,z,wood);}
  for(const x of [-6.5,-3.3,0,3.3,6.5])box(.09,.09,48,x,4.5+Math.sqrt(1-(x/9.8)**2)*4.2,0,gold);
  const themes=['#4b8171','#7484a8','#bb8359'];
- const names=['새싹의 숲','별빛의 숲','노을의 숲'];
+ const names=['새싹의 숲','나무의 길','이야기 서가'];
  for(let zone=0;zone<3;zone++){
   const z=18-zone*13.5,color=themes[zone];
   // Woven runner, metallic edging and a medallion beneath each chandelier.
@@ -25,7 +25,7 @@ export function buildForest(g) {
   for(const x of [-2.57,2.57])box(.035,.01,12.2,x,.045,z-4,gold);
   for(const zz of [z+1.8,z-9.8])box(5.1,.012,.035,0,.045,zz,gold);
   const medal=mesh(new THREE.RingGeometry(.85,.89,64),gold,0,.05,z-2);medal.rotation.x=-Math.PI/2;
-  const star=g.label('✦',1.1,1.1,{background:color,color:'#e6c58b',font:100});star.rotation.x=-Math.PI/2;star.position.set(0,.052,z-2);scene.add(star);floorMarks.push(star);
+  const star=g.label('❧',1.1,1.1,{background:color,color:'#e6c58b',font:100});star.rotation.x=-Math.PI/2;star.position.set(0,.052,z-2);scene.add(star);floorMarks.push(star);
   // Large welcoming portals frame the route without blocking the walking area.
   for(const x of [-6.7,6.7]){box(.5,5.5,.6,x,2.75,z+1.8,wood);box(.8,.3,.9,x,.15,z+1.8,stone);box(.7,.18,.8,x,4.7,z+1.8,gold);}
   const arch=[];for(let i=0;i<=32;i++){let a=i/32*Math.PI;arch.push(new THREE.Vector3(6.7*Math.cos(a),4.7+1.7*Math.sin(a),z+1.8));}

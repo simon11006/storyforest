@@ -23,7 +23,7 @@
 
 ## Classroom appearance
 
-- Keep twelve automatic classroom variants: three restrained variations of each of the forest, space, sea, and blossom base themes. Preserve the common library architecture and walking routes. Select the family and variant deterministically from the immutable class ID, so renaming, revisiting, or adding another class does not change an existing classroom. Keep family assignment independent of the variant count. Vary accent colors, foliage, display-frame tops, and ceiling motifs without changing exhibition capacity or book access.
+- Keep twelve automatic forest-only classroom variants: three restrained variations of each of the spring, summer/temperate, autumn, and tropical forest families. Do not restore space, planets, ocean or coral themes. Use seasonal foliage and tree species (flowering broadleaf, oak, birch, pine, maple, ginkgo, palm, banana and rainforest trees). Tree canopies must remain above book covers. Preserve the common library architecture and walking routes. Select the family and variant deterministically from the immutable class ID, so renaming, revisiting, or adding another class does not change an existing classroom. Keep family assignment independent of the variant count. Vary accent colors, foliage, display-frame tops, and ceiling motifs without changing exhibition capacity or book access.
 
 ## Teacher navigation
 
