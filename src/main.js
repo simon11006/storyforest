@@ -1,3 +1,4 @@
+import {setupFullscreen} from './fullscreen.js';
 import {showBookSuccess} from './feedback.js';
 import {classCapacity,availableSlots,exhibitedBooks} from './capacity.js';
 import {youtubeLink,videoAction,prepareBook,openVideo} from './video.js';
@@ -18,7 +19,7 @@ gallery=new Gallery($('#sceneHost'),{onRead:read,onMove:walking,onNear:b=>{$('#r
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());document.querySelectorAll('dialog').forEach(d=>d.addEventListener('close',()=>{gallery?.keys.clear();if(!current&&!document.querySelector('dialog[open]'))showLobby(true);}));$('#entryLobby').addEventListener('cancel',e=>{if(!current)e.preventDefault();});
 $('#enterBtn').onclick=enterExhibition;
 $('#resetView').onclick=()=>{gallery?.reset();walking();};$('#immersiveBtn').onclick=async()=>{walking();try{await gallery.lock();}catch(e){toast('이 브라우저에서는 화면을 드래그해 둘러봐 주세요.');}};
-$('#fullscreenBtn').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('#gallery').requestFullscreen();}catch{toast('이 브라우저에서는 전체 화면을 지원하지 않아요.');}};
+setupFullscreen();
 let high=false;$('#qualityBtn').onclick=()=>{high=!high;gallery.quality(high);$('#qualityBtn').textContent=high?'화질 · 고화질':'화질 · 가볍게';};
 document.querySelectorAll('[data-zone]').forEach(b=>b.onclick=()=>{gallery.zone(Number(b.dataset.zone));walking();});
 $('#readNear').onclick=()=>gallery.near&&read(gallery.near);$('#helpBtn').onclick=()=>openDialog('#help');$('#catalogBtn').onclick=$('#fallbackCatalog').onclick=()=>{renderCatalog();openDialog('#catalog');};$('#search').oninput=renderCatalog;

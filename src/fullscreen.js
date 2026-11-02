@@ -1,0 +1,8 @@
+export function setupFullscreen(doc=document){
+ const buttons=[...doc.querySelectorAll('[data-fullscreen]')],root=doc.documentElement;
+ const active=()=>!!(doc.fullscreenElement||doc.webkitFullscreenElement);
+ function sync(){const on=active();for(const button of buttons){button.textContent=on?'⤡ 전체화면 해제':'⤢ 전체화면';button.setAttribute('aria-label',on?'전체화면 해제':'전체화면으로 보기');button.setAttribute('aria-pressed',String(on));}root.classList.toggle('app-fullscreen',on);}
+ function explain(){let dialog=doc.querySelector('#fullscreenHelp');if(!dialog){dialog=doc.createElement('dialog');dialog.id='fullscreenHelp';dialog.className='fullscreen-help';dialog.setAttribute('aria-label','전체화면 안내');const title=doc.createElement('h2');title.textContent='전체화면 안내';const text=doc.createElement('p');text.textContent='이 브라우저에서는 전체화면 전환을 지원하지 않거나 허용하지 않았어요. 브라우저 메뉴에 전체화면 기능이 있는지 확인하거나, 전체화면을 지원하는 다른 브라우저에서 열어 주세요. 화면을 가로로 돌리면 더 넓게 볼 수 있어요.';const close=doc.createElement('button');close.textContent='확인';close.onclick=()=>dialog.close();dialog.append(title,text,close);doc.body.append(dialog);}if(!dialog.open)dialog.showModal();}
+ let busy=false;async function toggle(){if(busy)return;busy=true;try{if(active()){const exit=doc.exitFullscreen||doc.webkitExitFullscreen;if(!exit)throw Error('unsupported');await exit.call(doc);}else{const request=root.requestFullscreen||root.webkitRequestFullscreen;if(!request)throw Error('unsupported');await request.call(root);}}catch{explain();}finally{busy=false;sync();}}
+ for(const button of buttons)button.onclick=toggle;doc.addEventListener('fullscreenchange',sync);doc.addEventListener('webkitfullscreenchange',sync);sync();
+}
