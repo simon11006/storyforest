@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import {JSDOM} from 'jsdom';
+import {Gallery,canStand} from './src/gallery.js';
+import {buildReaders} from './src/readers.js';
+import {nextNpcLine,npcOwner,resetWalkingVisitors,updateWalkingVisitors} from './src/visitors.js';
+import {NpcSpeech} from './src/npc-speech.js';
+const g=Object.create(Gallery.prototype);g.scene=new THREE.Scene();g.camera=new THREE.PerspectiveCamera();g.camera.position.set(0,1.8,23);buildReaders(g);
+assert.equal(g.npcRoots[0].children.length,4);assert.equal(g.walkers.length,3);assert.equal(g.walkers.filter(w=>w.person.userData.gender==='girl').length,2);assert.equal(g.walkers.filter(w=>w.person.userData.gender==='boy').length,1);
+for(const root of g.npcRoots)for(const person of root.children){const lines=person.userData.npc.lines;assert.ok(new Set(Array.from({length:lines.length},()=>nextNpcLine(person).text)).size>=4);assert.equal(nextNpcLine(person).text,lines[0]);assert.equal(npcOwner(person.children[0]),person);}
+for(const capacity of [1,2,8,20,30]){resetWalkingVisitors(g,capacity);const initial=g.walkers.map(w=>w.person.position.clone());for(let i=0;i<1800;i++){updateWalkingVisitors(g,.1);for(const w of g.walkers){assert.ok(canStand(w.person.position.x,w.person.position.z),'visitor route must not cross seats, trees or the welcome sign');assert.ok(Math.abs(w.person.position.x)>5,'central walking route stays clear');}}assert.ok(g.walkers.every((w,i)=>w.person.position.distanceTo(initial[i])>.01||w.wait>0));}
+const actor=g.walkers[0];actor.person.userData.npc.paused=true;const stopped=actor.person.position.clone();updateWalkingVisitors(g,1);assert.ok(stopped.equals(actor.person.position));actor.person.userData.npc.paused=false;updateWalkingVisitors(g,1,{reducedMotion:true});assert.ok(stopped.equals(actor.person.position));updateWalkingVisitors(g,1,{paused:true});assert.ok(stopped.equals(actor.person.position));
+// A person in front of a cover receives the click; clicking a cover still opens it.
+let spoken,opened;g.speech={show:p=>spoken=p};g.events={onRead:b=>opened=b};g.frames=[];g.ray={intersectObjects:()=>[{distance:5,object:actor.person.children[0]}]};g.activateRay();assert.equal(spoken,actor.person);const book={title:'test'};g.ray.intersectObjects=()=>[{distance:4,object:{userData:{book}}}];g.activateRay();assert.equal(opened,book);
+const dom=new JSDOM('<main></main>');globalThis.document=dom.window.document;const ui=new NpcSpeech(document.querySelector('main'));ui.show(actor.person);const first=ui.message.textContent;assert.equal(actor.person.userData.npc.paused,true);ui.element.querySelector('.npc-next').click();assert.notEqual(ui.message.textContent,first);ui.element.querySelector('[aria-label="대화 닫기"]').click();assert.ok(ui.element.hidden);assert.equal(actor.person.userData.npc.paused,false);ui.close();dom.window.close();delete globalThis.document;
+console.log('PASS seven talkable NPCs, two additional girls and one boy, rotating dialogue, safe routes, pause/reduced motion, book clicks and accessible speech controls');

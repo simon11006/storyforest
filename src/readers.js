@@ -1,3 +1,4 @@
+import {giveDialogue,buildWalkingVisitors} from './visitors.js';
 import * as THREE from 'three';
 
 // Sit at alternating bench edges, with knees beyond the cushion and feet on the floor.
@@ -8,7 +9,7 @@ export function buildReaders(g){
  const pants=material('#34404c'),shoes=material('#35302e'),paper=material('#f5e8cf'),hair=material('#362921'),ink=material('#b8ad98');
  const poses=[[-4.3,11,.14,'#71827e','#deb49a'],[4.3,11,Math.PI-.18,'#a16c54','#bc8a68'],[-4.3,-3,Math.PI+.12,'#63758d','#e7c5ac'],[4.3,-17,-.12,'#a08a59','#c79c7e']];
  for(const [x,z,yaw,color,skinColor] of poses){
-  const person=new THREE.Group();person.name='seated-reader';person.position.set(x+Math.sin(yaw)*.42,.08,z+Math.cos(yaw)*.42);person.rotation.y=yaw;visitors.add(person);
+  const person=new THREE.Group();person.name='seated-reader';person.position.set(x+Math.sin(yaw)*.42,.08,z+Math.cos(yaw)*.42);person.rotation.y=yaw;giveDialogue(person,['책 읽는 친구 다온','책 읽는 친구 도윤','책 읽는 친구 서우','책 읽는 친구 시온'][visitors.children.length]);visitors.add(person);
   const skin=material(skinColor),shirt=material(color);
   const oval=(m,pos,scale,parent=person)=>{const o=new THREE.Mesh(sphere,m);o.position.set(...pos);o.scale.set(...scale);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;};
   const limb=(a,b,r,m)=>{const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b),o=new THREE.Mesh(cylinder,m);o.position.copy(start).add(end).multiplyScalar(.5);o.scale.set(r,start.distanceTo(end),r);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),end.sub(start).normalize());o.castShadow=true;person.add(o);oval(m,a,[r,r,r]);oval(m,b,[r,r,r]);};
@@ -37,5 +38,5 @@ export function buildReaders(g){
    for(let line=0;line<7;line++)g.box(.17,.002,.005,side*.122,.038,-.1+line*.03,ink,page);
   }
  }
- return visitors;
+ g.npcRoots=[visitors,buildWalkingVisitors(g)];return visitors;
 }
