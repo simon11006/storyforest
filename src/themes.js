@@ -1,3 +1,4 @@
+import {buildForestGround} from './ground.js';
 import * as THREE from 'three';
 
 export const baseThemes=[
@@ -32,14 +33,14 @@ function drawMaple(ctx,size){const points=mapleShape().getPoints();ctx.beginPath
 function ceilingTexture(g,t){const map=g.texture((ctx,w,h)=>{ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);for(let i=0;i<6;i++){const x=(i*193)%w,y=(i*137)%h,light=ctx.createRadialGradient(x,y,4,x,y,140);light.addColorStop(0,'#ffffffbb');light.addColorStop(1,'#73967e0a');ctx.fillStyle=light;ctx.fillRect(0,0,w,h);}},512,512);map.wrapS=map.wrapT=THREE.RepeatWrapping;map.repeat.set(...t.patternRepeat);map.userData.pattern=t.kind;map.userData.variant=t.variant;map.userData.treeShape=t.treeShape;return map;}
 function frondGeometry(length,width){const vertices=[],indices=[];for(let i=0;i<=10;i++){const u=i/10,x=u*length,y=Math.sin(u*Math.PI)*.18-u*u*.32,half=Math.sin(u*Math.PI)*width;vertices.push(x,y,-half,x,y,half);if(i<10){const k=i*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}}const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeVertexNormals();return geometry;}
 function addPlanters(g,group,t){
- const foliageGeometry=new THREE.IcosahedronGeometry(1,1),trunkGeometry=new THREE.CylinderGeometry(.09,.16,2.9,7),potGeometry=new THREE.CylinderGeometry(.45,.35,.75,12),leafMaterials=foliageColors(t).map(color=>g.material(color,{side:THREE.DoubleSide}));
+ const foliageGeometry=new THREE.IcosahedronGeometry(1,1),trunkGeometry=new THREE.CylinderGeometry(.09,.16,2.9,7),potGeometry=new THREE.CylinderGeometry(.55,.65,.24,9),leafMaterials=foliageColors(t).map(color=>g.material(color,{side:THREE.DoubleSide}));
  const add=(geometry,material,parent,x,y,z,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;parent.add(m);return m;};
- const trunkMaterial=g.material(t.treeShape==='birch'?'#f1ecda':t.wood),potMaterial=g.material(t.pale);
+ const trunkMaterial=g.material(t.treeShape==='birch'?'#f1ecda':t.wood),potMaterial=g.material(t.kind==='autumn'?'#948264':'#7b8865');
  if(t.treeShape==='birch'){trunkMaterial.map=g.texture((ctx,w,h)=>{ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.fillStyle='#514c4166';for(let i=0;i<15;i++){const x=(i*73)%w,y=i*h/15;ctx.fillRect(x,y,25+i%4*13,5);}},256,512);}
  const frond=t.treeShape==='palm'||t.treeShape==='banana'?frondGeometry(t.treeShape==='palm'?1.28:1.18,t.treeShape==='palm'?.13:.32):null;
  const cones=t.treeShape==='pine'?[new THREE.ConeGeometry(.8,1.25,8),new THREE.ConeGeometry(.63,1.05,8),new THREE.ConeGeometry(.43,.85,8)]:null;
  for(const x of [-7.2,7.2])for(const z of [22.5,13.5,0,-13.5,-22]){
-  const plant=new THREE.Group();plant.name='theme-planter';plant.userData.kind=t.kind;plant.userData.treeShape=t.treeShape;plant.position.set(x,0,z);group.add(plant);add(potGeometry,potMaterial,plant,0,.375,0);
+  const plant=new THREE.Group();plant.name='theme-planter';plant.userData.kind=t.kind;plant.userData.treeShape=t.treeShape;plant.position.set(x,0,z);group.add(plant);add(potGeometry,potMaterial,plant,0,.12,0);
   if(frond){
    add(trunkGeometry,trunkMaterial,plant,0,2.18,0,1,1.08,1);const count=t.treeShape==='palm'?9:7;
    for(let i=0;i<count;i++){const leaf=add(frond,leafMaterials[i%leafMaterials.length],plant,0,3.78+(i%2)*.12,0);leaf.name='tree-canopy';leaf.rotation.y=i*Math.PI*2/count;leaf.rotation.z=(i%3-1)*.08;}
@@ -112,7 +113,7 @@ export function applyClassTheme(g,c){
  const zoneNames={spring:['새순의 문','꽃나무 길','봄빛 서가'],summer:['나무 그늘','초록 잎길','여름 서가'],autumn:['단풍의 문','낙엽 길','노을 서가'],tropical:['큰 잎의 문','야자 그늘','우림 서가']};
  e.zoneSigns.forEach((sign,i)=>{sign.material.map?.dispose();sign.material.map=g.texture((ctx,w,h)=>{ctx.fillStyle=t.frame;ctx.fillRect(0,0,w,h);ctx.fillStyle=t.pale;ctx.font='bold 90px "Malgun Gothic",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`0${i+1}  ${zoneNames[t.kind][i]}`,w/2,h/2,w-40);},1024,256);});
  e.floorMarks.forEach(mark=>{mark.material.map?.dispose();mark.material.map=g.texture((ctx,w,h)=>{ctx.fillStyle=t.carpet;ctx.fillRect(0,0,w,h);ctx.translate(w/2,h/2);ctx.fillStyle=t.accent;ctx.strokeStyle=t.accent;ctx.lineWidth=3;drawLeaf(ctx,0,0,80,-.55);},256,256);});
- if(g.classDecor){disposeDecor(g.classDecor);g.scene.remove(g.classDecor);}const group=new THREE.Group();group.name='classroom-theme';g.classDecor=group;g.scene.add(group);addPlanters(g,group,t);addForestCanopy(g,group,t);
+ if(g.classDecor){disposeDecor(g.classDecor);g.scene.remove(g.classDecor);}const group=new THREE.Group();group.name='classroom-theme';g.classDecor=group;g.scene.add(group);addPlanters(g,group,t);addForestCanopy(g,group,t);buildForestGround(g,group,t);
  // All forest trees retain the established planter and walking footprints.
  g.box(2.3,.16,.85,0,.08,16.5,g.material(t.frame),group);for(const x of [-1.35,1.35]){g.box(.12,2.7,.14,x,1.35,16.5,g.material(t.accent),group);g.box(.42,.1,.75,x,.06,16.5,g.material(t.accent),group);}g.box(3.8,1.75,.18,0,2.25,16.5,g.material(t.accent),group);
  const signColors=welcomePalette(t);const texture=g.texture((ctx,w,h)=>{ctx.fillStyle=signColors.background;ctx.fillRect(0,0,w,h);ctx.strokeStyle=t.accent;ctx.lineWidth=3;ctx.strokeRect(22,22,w-44,h-44);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=signColors.ink;ctx.font='bold 34px "Malgun Gothic",sans-serif';ctx.fillText('작은 작가들의 이야기숲',w/2,85,w-90);const name=c?.name?c.name+' 도서관':'이야기숲 도서관';let size=88;do{ctx.font=`bold ${size}px "Malgun Gothic",sans-serif`;if(ctx.measureText(name).width<w-100)break;size-=2;}while(size>32);const lines=[];let line='';for(const ch of name){if(ctx.measureText(line+ch).width>w-100&&line){lines.push(line);line='';}line+=ch;}lines.push(line);ctx.fillStyle=signColors.ink;lines.forEach((s,i)=>ctx.fillText(s,w/2,235+(i-(lines.length-1)/2)*(size+12)));ctx.font='bold 32px "Malgun Gothic",sans-serif';ctx.fillStyle=signColors.ink;ctx.fillText('친구들이 만든 책 속으로 함께 떠나요!',w/2,370);},1024,448);

@@ -1,0 +1,25 @@
+import * as THREE from 'three';
+
+export function groundPalette(t){
+ const palettes={spring:{soil:'#8b9c64',path:'#d9c8a5',grass:['#5d8c42','#86ad57','#accb77'],flowers:['#fff7ed','#f7bad7','#eacb63']},summer:{soil:'#73885a',path:'#c3b798',grass:['#365f38','#5c8647','#8ba660'],flowers:['#fff7d9','#b7b9e0','#e8d385']},autumn:{soil:'#99825b',path:'#c9ac7d',grass:['#71753f','#9a944e','#bba363'],flowers:['#e4b74d','#fcdf9e','#bd7b88']},tropical:{soil:'#59724d',path:'#b6ad88',grass:['#285e3d','#427c45','#75a451'],flowers:['#ef9e89','#ffdeb1','#d6b3e4']}};
+ const p=palettes[t.kind];return{...p,flowers:t.treeShape==='cherry'?['#fff5fa','#ffc6df','#ffe3ee']:p.flowers};
+}
+
+export function buildForestGround(g,parent,t){
+ const p=groundPalette(t),group=new THREE.Group();group.name='forest-ground';group.userData.kind=t.kind;parent.add(group);g.environment.floor.color.set(p.soil);
+ let seed=(t.seed^0x739f21)>>>0;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const texture=g.texture((ctx,w,h)=>{ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);for(let i=0;i<2600;i++){ctx.fillStyle=i%2?'#6f674c16':'#fffdf533';ctx.beginPath();ctx.ellipse(random()*w,random()*h,1+random()*3,1+random()*2,random()*3,0,Math.PI*2);ctx.fill();}},256,256);texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(3,24);
+ // A continuous, softly irregular earth path replaces rectangular carpet panels.
+ const positions=[],uv=[],indices=[];for(let i=0;i<=98;i++){const z=-24.5+i*.5,center=Math.sin(i*.12)*.12,half=2.85+Math.sin(i*.28)*.13;positions.push(center-half,.018,z,center+half,.018,z);uv.push(0,i/98,1,i/98);if(i<98){const k=i*2;indices.push(k,k+2,k+1,k+1,k+2,k+3);}}
+ const pathGeometry=new THREE.BufferGeometry();pathGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));pathGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));pathGeometry.setIndex(indices);pathGeometry.computeVertexNormals();const path=new THREE.Mesh(pathGeometry,g.material(p.path,{map:texture,roughness:1}));path.name='woodland-path';path.receiveShadow=true;group.add(path);
+ const blade=new THREE.Shape();blade.moveTo(-.035,0);blade.quadraticCurveTo(-.04,.22,.09,.4);blade.quadraticCurveTo(.015,.2,.035,0);blade.closePath();
+ const grass=new THREE.InstancedMesh(new THREE.ShapeGeometry(blade,3),g.material('#fff',{side:THREE.DoubleSide}),2400);grass.name='pathside-grass';
+ const flowers=new THREE.InstancedMesh(new THREE.CircleGeometry(.075,5),g.material('#fff',{side:THREE.DoubleSide}),180),stems=new THREE.InstancedMesh(new THREE.CylinderGeometry(.008,.012,1,4),g.material(p.grass[0]),180);flowers.name='woodland-wildflowers';stems.name='wildflower-stems';
+ const dummy=new THREE.Object3D(),patches=[];for(let i=0;i<400;i++){const z=random()*46-23,inner=i%3===0&&!([11,-3,-17].some(b=>Math.abs(z-b)<1.7));patches.push({x:(i%2?1:-1)*(inner?3.25+random()*.35:6.4+random()*1.7),z});}
+ for(let i=0;i<grass.count;i++){const patch=patches[Math.floor(i/6)];dummy.position.set(patch.x+(random()-.5)*.24,0,patch.z+(random()-.5)*.28);dummy.rotation.set(0,random()*Math.PI*2,(random()-.5)*.2);dummy.scale.setScalar(.45+random()*.4);dummy.updateMatrix();grass.setMatrixAt(i,dummy.matrix);grass.setColorAt(i,new THREE.Color(p.grass[i%3]));}
+ for(let i=0;i<flowers.count;i++){const patch=patches[i*2],height=.17+random()*.13;dummy.position.set(patch.x,height/2,patch.z);dummy.rotation.set(0,0,0);dummy.scale.set(1,height,1);dummy.updateMatrix();stems.setMatrixAt(i,dummy.matrix);dummy.position.y=height;dummy.rotation.set(-Math.PI/2+.25,0,random()*6);dummy.scale.setScalar(.65+random()*.35);dummy.updateMatrix();flowers.setMatrixAt(i,dummy.matrix);flowers.setColorAt(i,new THREE.Color(p.flowers[i%3]));}group.add(grass,stems,flowers);
+ const stones=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),g.material('#979582',{roughness:1}),60);stones.name='mossy-stones';for(let i=0;i<stones.count;i++){dummy.position.set((i%2?1:-1)*(9.4+random()*.6),.1,random()*48-24);dummy.rotation.set(random(),random()*6,0);dummy.scale.set(.2+random()*.2,.12+random()*.1,.2+random()*.25);dummy.updateMatrix();stones.setMatrixAt(i,dummy.matrix);}group.add(stones);
+ // The surrounding grove stays behind the exhibit planes, never across a cover.
+ const trunks=new THREE.InstancedMesh(new THREE.CylinderGeometry(.08,.18,1,7),g.material(t.wood),48),crowns=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,1),g.material('#fff',{roughness:1}),144);trunks.name='background-tree-trunks';crowns.name='background-tree-crowns';
+ for(let i=0;i<48;i++){const x=(i%2?1:-1)*(11.8+random()*6),z=-27+random()*55,h=4.3+random()*2.4;dummy.position.set(x,h/2,z);dummy.rotation.set(0,random()*6,(random()-.5)*.07);dummy.scale.set(1,h,1);dummy.updateMatrix();trunks.setMatrixAt(i,dummy.matrix);for(let n=0;n<3;n++){dummy.position.set(x+(n-1)*.65,h-.3+random()*.6,z+(random()-.5));dummy.scale.set(1.1+random()*.5,.8+random()*.7,1.1+random()*.5);dummy.updateMatrix();crowns.setMatrixAt(i*3+n,dummy.matrix);crowns.setColorAt(i*3+n,new THREE.Color(t.kind==='autumn'?t.plants[(i+n)%3]:p.grass[(i+n)%3]));}}group.add(trunks,crowns);
+}
