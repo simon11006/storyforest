@@ -7,7 +7,7 @@ export const baseThemes=[
  {name:'열대의 숲',kind:'tropical',wall:'#2e5b42',ceiling:'#a8dacc',carpet:'#527a44',accent:'#c7b06a',wood:'#59442e',frame:'#274b34',pale:'#e9e3c8',light:'#ffe8bb',fill:'#afd5a8'}
 ];
 const variants=[
- [{name:'벚꽃 숲',treeShape:'cherry',wall:'#ffe0eb',ceiling:'#eaf8ff',carpet:'#efb1cf',wood:'#b98967',frame:'#ae617e',accent:'#fff0cb',pale:'#fff6fa',light:'#fff7fc',fill:'#fff0fa',plants:['#fff7fb','#ffe2ef','#ffc7df']},{name:'연둣빛 새순 숲',treeShape:'broadleaf',wall:'#536b49',carpet:'#8c9e5b',plants:['#739956','#9eb571','#c1ce91']},{name:'목련 숲',treeShape:'magnolia',wall:'#b5c4ac',ceiling:'#fff3de',carpet:'#91a889',frame:'#647d65',plants:['#6b8956','#d8d4b7','#fff0d9']}],
+ [{name:'벚꽃 숲',treeShape:'cherry',wall:'#dce8cf',ceiling:'#eaf8ff',carpet:'#efb1cf',wood:'#b98967',frame:'#ae617e',accent:'#fff0cb',pale:'#fff6fa',light:'#fff7fc',fill:'#fff0fa',plants:['#fff7fb','#ffe2ef','#ffc7df']},{name:'연둣빛 새순 숲',treeShape:'broadleaf',wall:'#536b49',carpet:'#8c9e5b',plants:['#739956','#9eb571','#c1ce91']},{name:'목련 숲',treeShape:'magnolia',wall:'#b5c4ac',ceiling:'#fff3de',carpet:'#91a889',frame:'#647d65',plants:['#6b8956','#d8d4b7','#fff0d9']}],
  [{name:'참나무 숲',treeShape:'oak',wall:'#355e49',carpet:'#5d8356',plants:['#3d7145','#64874b','#8aa45e']},{name:'자작나무 숲',treeShape:'birch',wall:'#4d6952',carpet:'#7c9368',plants:['#72985a','#96b773','#bdd09a']},{name:'소나무 숲',treeShape:'pine',wall:'#345743',carpet:'#58774c',plants:['#315e42','#497651','#73946a']}],
  [{name:'단풍 숲',treeShape:'maple',wall:'#78573e',carpet:'#af7948',plants:['#bc492c','#ed7d28','#ffbd55']},{name:'은행나무 숲',treeShape:'ginkgo',wall:'#70613d',carpet:'#b09b4f',plants:['#d1a40c','#f3cf38','#ffe989']},{name:'노을빛 참나무 숲',treeShape:'oak',wall:'#795947',carpet:'#a57c58',plants:['#9b633e','#bd8950','#d4ab6d']}],
  [{name:'야자 숲',treeShape:'palm',wall:'#2e5b42',carpet:'#527a44',plants:['#1b704b','#399557','#7abe65']},{name:'바나나 잎 숲',treeShape:'banana',wall:'#426447',carpet:'#6b8c4c',plants:['#4f7d3e','#72964e','#a2b672']},{name:'열대우림',treeShape:'rainforest',wall:'#284e3b',carpet:'#416b43',plants:['#2e6240','#4c7b47','#7c9c5c']}]
@@ -65,21 +65,22 @@ function addPlanters(g,group,t){
 export function welcomePalette(t){return{background:t.kind==='spring'?'#fff8fc':'#fff9e9',ink:{spring:'#652442',summer:'#153e2c',autumn:'#583016',tropical:'#123f38'}[t.kind]};}
 export function foliageColors(t){return t.kind==='autumn'?[...t.plants,'#b73525','#e66c27','#985535','#6d7940']:t.plants;}
 function addForestCanopy(g,group,t){
- const flowering=['cherry','magnolia'].includes(t.treeShape),tropical=t.kind==='tropical';
+ const flowering=['cherry','magnolia'].includes(t.treeShape),tropical=t.kind==='tropical',cherry=t.treeShape==='cherry';
  const geometry=tropical?frondGeometry(1.15,.17):wallFoliageGeometry(t);
  // Leaves pivot at their petiole; flowers meet the tip of their short stalk.
  if(!flowering&&!tropical)geometry.translate(0,.25,0);
  const segments=[],foliage=[],colors=foliageColors(t).map(c=>new THREE.Color(c));let seed=t.seed;
  const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  const segment=(a,b,r)=>segments.push({a:a.clone(),b:b.clone(),r});
- for(const side of [-1,1])for(const station of [-22,-14.5,-6,1.7,9,16.6,23]){
+ const stations=cherry?[-23,-18,-13.2,-8.3,-3.5,1.4,6.5,11.7,17,22.4]:[-22,-14.5,-6,1.7,9,16.6,23];
+ for(const side of [-1,1])for(const station of stations){
   const z=station+(random()-.5)*2,bend=(random()-.5)*3,height=6.8+random()*1.1,root=new THREE.Vector3(side*9.25,4.8,z);
   const trunk=new THREE.CatmullRomCurve3([new THREE.Vector3(side*9.65,0,z-.35),new THREE.Vector3(side*9.5,2.3,z+.2),root]);
   for(let i=0;i<8;i++)segment(trunk.getPoint(i/8),trunk.getPoint((i+1)/8),.32-i*.018);
-  const main=new THREE.CatmullRomCurve3([root,new THREE.Vector3(side*(6.5+random()),5.9,z+bend),new THREE.Vector3(side*(3+random()),height,z+1+bend),new THREE.Vector3(side*(random()-.3),height-.15,z+1.8+bend)]);
+  const main=new THREE.CatmullRomCurve3([root,new THREE.Vector3(side*(6.5+random()),5.9,z+bend),new THREE.Vector3(side*(3+random()),height,z+1+bend),new THREE.Vector3(side*(random()-(cherry?1.3:.3)),height-.15,z+1.8+bend)]);
   for(let i=0;i<16;i++)segment(main.getPoint(i/16),main.getPoint((i+1)/16),.19*(1-i/19));
-  for(let j=0;j<10;j++){
-   const u=.18+j*.08,base=main.getPoint(u),direction=j%2?1:-1;
+  for(let j=0;j<(cherry?12:10);j++){
+   const u=cherry?.12+j*.075:.18+j*.08,base=main.getPoint(u),direction=j%2?1:-1;
    const tip=base.clone().add(new THREE.Vector3(-side*(.5+random()*.7),-.1+random()*.4,direction*(1.8+random()*1.5)));
    const twig=new THREE.QuadraticBezierCurve3(base,base.clone().lerp(tip,.5).add(new THREE.Vector3(0,.2,0)),tip);
    for(let k=0;k<4;k++)segment(twig.getPoint(k/4),twig.getPoint((k+1)/4),.035*(1-k*.17));
@@ -93,7 +94,7 @@ function addForestCanopy(g,group,t){
    }
   }
  }
- const dummy=new THREE.Object3D(),up=new THREE.Vector3(0,1,0),branches=new THREE.InstancedMesh(new THREE.CylinderGeometry(.72,1,1,6),g.material(t.kind==='spring'?'#78503c':t.wood),segments.length);
+ const dummy=new THREE.Object3D(),up=new THREE.Vector3(0,1,0),branches=new THREE.InstancedMesh(new THREE.CylinderGeometry(.72,1,1,6),g.material(cherry?'#65473e':t.kind==='spring'?'#78503c':t.wood),segments.length);
  branches.name='canopy-branches';segments.forEach(({a,b,r},i)=>{dummy.position.copy(a).lerp(b,.5);dummy.quaternion.setFromUnitVectors(up,b.clone().sub(a).normalize());dummy.scale.set(r,a.distanceTo(b),r);dummy.updateMatrix();branches.setMatrixAt(i,dummy.matrix);});group.add(branches);
  const leaves=new THREE.InstancedMesh(geometry,g.material('#ffffff',{side:THREE.DoubleSide,roughness:.9,emissive:flowering?'#ffdae9':'#000000',emissiveIntensity:flowering?.32:0}),foliage.length);leaves.name='forest-ceiling-canopy';leaves.userData.kind=t.kind;
  foliage.forEach(({anchor,angle,tilt,scale,color},i)=>{dummy.position.copy(anchor);dummy.rotation.set(tropical?tilt:-Math.PI/2+tilt,tropical?angle:0,tropical?0:angle);dummy.scale.setScalar(scale);dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);leaves.setColorAt(i,color);});group.add(leaves);
