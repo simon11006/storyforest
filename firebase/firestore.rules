@@ -26,7 +26,7 @@ service cloud.firestore {
     allow create: if !deleting(s,c) && (manages(s,c) || (signed() && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.autoPublish==true && get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.accepting==true && (video(request.resource.data) || (request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/'+request.auth.uid+'_[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/'+request.auth.uid+'_[^/]+/cover.jpg'))))) && slot.matches('^([1-9]|[12][0-9]|30)$') && int(slot)<=capacity(s,c) && request.resource.data.slot==int(slot) && validBook(request.resource.data)
      && request.resource.data.keys().hasOnly(['slot','title','author','pages','pdfPath','coverPath','bytes','createdAt','youtubeUrl','kind'])
      && (video(request.resource.data) || (request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/cover.jpg')));
-    allow update: if manages(s,c) && !deleting(s,c) && validBook(request.resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title','author','youtubeUrl']);
+    allow update: if manages(s,c) && !deleting(s,c) && validBook(request.resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title','author','youtubeUrl','kind','pages','bytes','pdfPath','coverPath']) && (video(request.resource.data) || (request.resource.data.pdfPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/book.pdf') && request.resource.data.coverPath.matches('schools/'+s+'/classes/'+c+'/[^/]+/cover.jpg')));
     allow delete: if manages(s,c);
    }
    match /submissions/{uid}{

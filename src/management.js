@@ -4,7 +4,7 @@ import {prepareBook} from './video.js';
 import {classCapacity,assertCapacity,availableSlots} from './capacity.js';
 export function setupManagement({store,inspectPDF,read,openDialog,status,friendly,getCurrent,getClasses,getEntryClass,refresh,renderManager,onBookComplete}){
  const $=s=>document.querySelector(s),el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
- $('#manageBooks').addEventListener('click',async event=>{const button=event.target.closest('[data-edit-book]');if(!button)return;const c=getCurrent();if(!c||!store.manages(c))return;try{const book=(await store.books(c.id,{covers:false})).find(b=>b.slot===Number(button.dataset.editBook));if(!book)throw Error('책을 찾을 수 없어요.');editBookDialog(store,c,book,refresh);}catch(e){status('#managerStatus',friendly(e),true);}});
+ $('#manageBooks').addEventListener('click',async event=>{const button=event.target.closest('[data-edit-book]');if(!button)return;const c=getCurrent();if(!c||!store.manages(c))return;try{const book=(await store.books(c.id,{covers:false})).find(b=>b.slot===Number(button.dataset.editBook));if(!book)throw Error('책을 찾을 수 없어요.');editBookDialog(store,c,book,refresh,inspectPDF);}catch(e){status('#managerStatus',friendly(e),true);}});
  $('#editorPanel').before($('#adminPanel'),$('#reviewPanel'));
  let submitting=false,reviewGeneration=0,studentClass;
  const error=e=>status('#managerStatus',friendly(e),true);

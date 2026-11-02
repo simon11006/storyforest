@@ -46,12 +46,22 @@ export class LibraryStore {
   try{await upload(pdfPath,new Blob([book.data]),'application/pdf');await upload(coverPath,coverBlob,'image/jpeg');await runTransaction(this.firestore,async tx=>{const latest=await tx.get(doc(this.classCollection(),classId));if(!latest.exists())throw Error('학급을 찾을 수 없어요.');if(latest.data().deleting)throw Error('삭제 중인 학급에는 작품을 올릴 수 없어요.');assertSlot(book.slot,classCapacity(latest.data()));const dest=doc(this.bookCollection(classId),String(book.slot));const old=await tx.get(dest);if(old.exists())throw Error('이미 사용 중인 전시 위치예요.');tx.set(dest,{slot:book.slot,title:book.title,author:book.author,youtubeUrl:book.youtubeUrl,pages:book.pages,pdfPath,coverPath,bytes:book.data.byteLength,createdAt:Date.now()});});}
   catch(e){await Promise.allSettled([deleteObject(ref(this.storage,pdfPath)),deleteObject(ref(this.storage,coverPath))]);throw e;}
  }
- async updateBook(classId,book,changes){
+ async updateBook(classId,book,changes,replacement,onProgress){
  if(!await this.canManageId(classId))throw Error('담임교사 또는 관리자만 수정할 수 있어요.');
  const patch={title:String(changes.title||'').trim(),author:String(changes.author||'').trim(),youtubeUrl:youtubeLink(changes.youtubeUrl)};
  if(!patch.title||patch.title.length>100||!patch.author||patch.author.length>50)throw Error('제목은 1~100자, 작가 이름은 1~50자로 입력해 주세요.');
- const validate=old=>{if(!old)throw Error('이미 삭제된 책입니다.');if(old.kind==='video'&&!patch.youtubeUrl)throw Error('영상북은 유튜브 링크가 필요해요.');};
- if(this.mode==='local'){const key=classId+':'+book.slot,old=(await this.all('books')).find(b=>b.classId===classId&&b.slot===book.slot);validate(old);await this.write('books',{...old,...patch,key});return;}
+ if(replacement&&(!replacement.data?.byteLength||replacement.data.byteLength>104857600||!Number.isInteger(replacement.pages)||replacement.pages<1||!replacement.cover))throw Error('올바른 100MB 이하 PDF를 선택해 주세요.');
+ const validate=old=>{if(!old)throw Error('이미 삭제된 책입니다.');if(old.kind==='video'&&!replacement&&!patch.youtubeUrl)throw Error('영상북은 유튜브 링크가 필요해요.');};
+ if(this.mode==='local'){const key=classId+':'+book.slot,old=(await this.all('books')).find(b=>b.classId===classId&&b.slot===book.slot);validate(old);await this.write('books',{...old,...patch,...(replacement?{...replacement,kind:'pdf',bytes:replacement.data.byteLength}:{}),key});return;}
+ if(replacement){
+ const cls=await this.getClass(classId);if(cls.deleting)throw Error('삭제 중인 학급입니다.');assertSlot(book.slot,classCapacity(cls));
+ const folder='schools/'+this.school+'/classes/'+classId+'/'+crypto.randomUUID(),pdfPath=folder+'/book.pdf',coverPath=folder+'/cover.jpg';let oldPaths=[];
+ const upload=(path,data,contentType)=>new Promise((resolve,reject)=>{const task=uploadBytesResumable(ref(this.storage,path),data,{contentType,customMetadata:{slot:String(book.slot)}});task.on('state_changed',s=>onProgress?.(Math.round(s.bytesTransferred/s.totalBytes*100)),reject,resolve);});
+ try{await upload(pdfPath,new Blob([replacement.data]),'application/pdf');await upload(coverPath,await(await fetch(replacement.cover)).blob(),'image/jpeg');
+ await runTransaction(this.firestore,async tx=>{const cls=await tx.get(doc(this.classCollection(),classId)),dest=doc(this.bookCollection(classId),String(book.slot)),snapshot=await tx.get(dest);if(!cls.exists()||cls.data().deleting)throw Error('삭제 중이거나 없는 학급입니다.');const old=snapshot.exists()?snapshot.data():null;validate(old);if(old.pdfPath!==book.pdfPath||old.coverPath!==book.coverPath||old.createdAt!==book.createdAt)throw Error('책이 다른 곳에서 변경되었습니다. 수정 창을 다시 열어 주세요.');oldPaths=[old.pdfPath,old.coverPath].filter(Boolean);tx.update(dest,{...patch,kind:'pdf',pages:replacement.pages,bytes:replacement.data.byteLength,pdfPath,coverPath});});
+ }catch(error){await Promise.allSettled([pdfPath,coverPath].map(path=>deleteObject(ref(this.storage,path))));throw error;}
+ await Promise.allSettled(oldPaths.map(path=>deleteObject(ref(this.storage,path))));return;
+ }
  await runTransaction(this.firestore,async tx=>{const cls=await tx.get(doc(this.classCollection(),classId)),dest=doc(this.bookCollection(classId),String(book.slot)),snapshot=await tx.get(dest);if(!cls.exists()||cls.data().deleting)throw Error('삭제 중이거나 없는 학급입니다.');validate(snapshot.exists()?snapshot.data():null);tx.update(dest,patch);});
  }
  async removeBook(classId,book){if(!await this.canManageId(classId))throw Error('교사 권한이 필요해요.');if(this.mode==='local'){if(!this.db){this.memory.books.delete(`${classId}:${book.slot}`);return;}await new Promise((resolve,reject)=>{const t=this.db.transaction('books','readwrite');t.objectStore('books').delete(`${classId}:${book.slot}`);t.oncomplete=resolve;t.onerror=()=>reject(t.error);});}else{await deleteDoc(doc(this.bookCollection(classId),String(book.slot)));const results=await Promise.allSettled([book.pdfPath,book.coverPath].filter(Boolean).map(path=>deleteObject(ref(this.storage,path))));if(results.some(r=>r.status==='rejected'))throw Error('전시에서는 내렸지만 저장소 원본 정리가 필요해요.');}}
