@@ -27,6 +27,16 @@ function flowerShape(){const shape=new THREE.Shape();for(let i=0;i<=50;i++){cons
 function wallFoliageGeometry(t){const geometry=new THREE.ShapeGeometry(t.treeShape==='cherry'||t.treeShape==='magnolia'?flowerShape():t.treeShape==='maple'?mapleShape():t.treeShape==='ginkgo'?ginkgoShape():t.treeShape==='pine'?needleShape():leafShape(),8);const p=geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,['cherry','magnolia'].includes(t.treeShape)?1.5*(p.getX(i)**2+p.getY(i)**2):.22*p.getX(i)*p.getX(i));geometry.computeVertexNormals();return geometry;}
 function ginkgoShape(){const shape=new THREE.Shape();shape.moveTo(0,-.22);for(let i=0;i<=20;i++){const a=.15+i/20*(Math.PI-.3);shape.lineTo(Math.cos(a)*.3,Math.sin(a)*.3-.05);}shape.lineTo(0,-.22);return shape;}
 function needleShape(){const shape=new THREE.Shape();shape.moveTo(0,-.3);shape.lineTo(-.025,.2);shape.lineTo(0,.36);shape.lineTo(.025,.2);shape.closePath();return shape;}
+// A whole needle-bearing shoot, rooted at the twig, rather than one isolated needle.
+function pineSprayGeometry(){
+ const vertices=[];for(let node=0;node<6;node++)for(const side of [-1,1])for(const layer of [-1,1]){
+  const y=node*.145,spread=.32+Math.sin(node/6*Math.PI)*.27,z=layer*.045;
+  vertices.push(-.035,y,0,.035,y+.04,0,side*spread,y+.28+(node%3)*.025,z);
+  vertices.push(side*.015,y+.025,0,side*.085,y+.07,0,side*(spread*.82),y+.42,z*.7);
+ }
+ vertices.push(-.025,0,0,.025,0,0,0,1.22,0);
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.computeVertexNormals();geometry.userData.needleShoot=true;return geometry;
+}
 function mapleShape(){return new THREE.Shape([[-.03,-.24],[.03,-.24],[.02,-.1],[.17,-.14],[.12,-.04],[.25,.02],[.14,.08],[.17,.19],[.07,.14],[0,.3],[-.07,.14],[-.17,.19],[-.14,.08],[-.25,.02],[-.12,-.04],[-.17,-.14],[-.02,-.1]].map(([x,y])=>new THREE.Vector2(x,y)));}
 function drawLeaf(ctx,x,y,size,angle=0){ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(0,size);ctx.bezierCurveTo(-size*.9,size*.2,-size*.65,-size*.55,0,-size);ctx.bezierCurveTo(size*.65,-size*.55,size*.9,size*.2,0,size);ctx.fill();ctx.beginPath();ctx.moveTo(0,size);ctx.lineTo(0,-size*.8);ctx.stroke();ctx.restore();}
 function drawMaple(ctx,size){const points=mapleShape().getPoints();ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x*size,p.y*size):ctx.moveTo(p.x*size,p.y*size));ctx.closePath();ctx.fill();}
@@ -66,38 +76,38 @@ function addPlanters(g,group,t){
 export function welcomePalette(t){return{background:t.kind==='spring'?'#fff8fc':'#fff9e9',ink:{spring:'#652442',summer:'#153e2c',autumn:'#583016',tropical:'#123f38'}[t.kind]};}
 export function foliageColors(t){return t.kind==='autumn'?[...t.plants,'#b73525','#e66c27','#985535','#6d7940']:t.plants;}
 function addForestCanopy(g,group,t){
- const flowering=['cherry','magnolia'].includes(t.treeShape),tropical=t.kind==='tropical',cherry=t.treeShape==='cherry';
- const geometry=tropical?frondGeometry(1.15,.17):wallFoliageGeometry(t);
+ const flowering=['cherry','magnolia'].includes(t.treeShape),tropical=t.kind==='tropical',cherry=t.treeShape==='cherry',pine=t.treeShape==='pine',dense=cherry||pine;
+ const geometry=pine?pineSprayGeometry():tropical?frondGeometry(1.15,.17):wallFoliageGeometry(t);
  // Leaves pivot at their petiole; flowers meet the tip of their short stalk.
- if(!flowering&&!tropical)geometry.translate(0,.25,0);
+ if(!flowering&&!tropical&&!pine)geometry.translate(0,.25,0);
  const segments=[],foliage=[],colors=foliageColors(t).map(c=>new THREE.Color(c));let seed=t.seed;
  const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  const segment=(a,b,r)=>segments.push({a:a.clone(),b:b.clone(),r});
- const stations=cherry?[-23,-18,-13.2,-8.3,-3.5,1.4,6.5,11.7,17,22.4]:[-22,-14.5,-6,1.7,9,16.6,23];
+ const stations=dense?[-23,-18,-13.2,-8.3,-3.5,1.4,6.5,11.7,17,22.4]:[-22,-14.5,-6,1.7,9,16.6,23];
  for(const side of [-1,1])for(const station of stations){
   const z=station+(random()-.5)*2,bend=(random()-.5)*3,height=6.8+random()*1.1,root=new THREE.Vector3(side*9.25,4.8,z);
   const trunk=new THREE.CatmullRomCurve3([new THREE.Vector3(side*9.65,0,z-.35),new THREE.Vector3(side*9.5,2.3,z+.2),root]);
   for(let i=0;i<8;i++)segment(trunk.getPoint(i/8),trunk.getPoint((i+1)/8),.32-i*.018);
-  const main=new THREE.CatmullRomCurve3([root,new THREE.Vector3(side*(6.5+random()),5.9,z+bend),new THREE.Vector3(side*(3+random()),height,z+1+bend),new THREE.Vector3(side*(random()-(cherry?1.3:.3)),height-.15,z+1.8+bend)]);
+  const main=new THREE.CatmullRomCurve3([root,new THREE.Vector3(side*(6.5+random()),5.9,z+bend),new THREE.Vector3(side*(3+random()),height,z+1+bend),new THREE.Vector3(side*(random()-(dense?1.3:.3)),height-.15,z+1.8+bend)]);
   for(let i=0;i<16;i++)segment(main.getPoint(i/16),main.getPoint((i+1)/16),.19*(1-i/19));
-  for(let j=0;j<(cherry?12:10);j++){
-   const u=cherry?.12+j*.075:.18+j*.08,base=main.getPoint(u),direction=j%2?1:-1;
+  for(let j=0;j<(dense?12:10);j++){
+   const u=dense?.12+j*.075:.18+j*.08,base=main.getPoint(u),direction=j%2?1:-1;
    const tip=base.clone().add(new THREE.Vector3(-side*(.5+random()*.7),-.1+random()*.4,direction*(1.8+random()*1.5)));
    const twig=new THREE.QuadraticBezierCurve3(base,base.clone().lerp(tip,.5).add(new THREE.Vector3(0,.2,0)),tip);
    for(let k=0;k<4;k++)segment(twig.getPoint(k/4),twig.getPoint((k+1)/4),.035*(1-k*.17));
    for(let k=0;k<6;k++){
-    const node=twig.getPoint(.18+k*.16),count=flowering?6:2;
+    const node=twig.getPoint(.18+k*.16),count=flowering?6:pine?4:2;
     for(let n=0;n<count;n++){
      const angle=j*1.8+k*2.4+n*Math.PI*2/count,anchor=node.clone().add(new THREE.Vector3(Math.cos(angle)*(.2+random()*.25),-.03-random()*.3,Math.sin(angle)*(.2+random()*.25)));
      segment(node,anchor,.012);
-     foliage.push({anchor,angle,tilt:(random()-.5)*(flowering?1.4:.55),scale:flowering?.85+random()*.35:tropical?.65+random()*.25:.95+random()*.5,color:colors[(j+k+n+Math.floor(random()*3))%colors.length]});
+     foliage.push({anchor,angle,tilt:(random()-.5)*(flowering?1.4:pine?.3:.55),scale:flowering?.85+random()*.35:pine?1.15+random()*.5:tropical?.65+random()*.25:.95+random()*.5,color:colors[(j+k+n+Math.floor(random()*3))%colors.length]});
     }
    }
   }
  }
  const dummy=new THREE.Object3D(),up=new THREE.Vector3(0,1,0),branches=new THREE.InstancedMesh(new THREE.CylinderGeometry(.72,1,1,6),g.material(cherry?'#65473e':t.kind==='spring'?'#78503c':t.wood),segments.length);
  branches.name='canopy-branches';segments.forEach(({a,b,r},i)=>{dummy.position.copy(a).lerp(b,.5);dummy.quaternion.setFromUnitVectors(up,b.clone().sub(a).normalize());dummy.scale.set(r,a.distanceTo(b),r);dummy.updateMatrix();branches.setMatrixAt(i,dummy.matrix);});group.add(branches);
- const leaves=new THREE.InstancedMesh(geometry,g.material('#ffffff',{side:THREE.DoubleSide,roughness:.9,emissive:flowering?'#ffdae9':'#000000',emissiveIntensity:flowering?.32:0}),foliage.length);leaves.name='forest-ceiling-canopy';leaves.userData.kind=t.kind;
+ const leaves=new THREE.InstancedMesh(geometry,g.material('#ffffff',{side:THREE.DoubleSide,roughness:.9,emissive:flowering?'#ffdae9':pine?'#315e42':'#000000',emissiveIntensity:flowering?.32:pine?.2:0}),foliage.length);leaves.name='forest-ceiling-canopy';leaves.userData.kind=t.kind;
  foliage.forEach(({anchor,angle,tilt,scale,color},i)=>{dummy.position.copy(anchor);dummy.rotation.set(tropical?tilt:-Math.PI/2+tilt,tropical?angle:0,tropical?0:angle);dummy.scale.setScalar(scale);dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);leaves.setColorAt(i,color);});group.add(leaves);
  if(t.kind==='autumn'){
   const fallen=new THREE.InstancedMesh(wallFoliageGeometry({...t,treeShape:'maple'}),leaves.material,140);fallen.name='fallen-autumn-leaves';
