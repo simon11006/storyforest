@@ -1,4 +1,4 @@
-import {chooseClassTheme} from './themes.js';
+import {chooseClassTheme,themes} from './themes.js';
 import {initializeApp} from 'firebase/app';
 import {getAuth,signInAnonymously,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,reload,signOut,onAuthStateChanged,getIdToken} from 'firebase/auth';
 import {getFirestore,collection,doc,getDoc,getDocs,setDoc,runTransaction,deleteDoc,onSnapshot,query,limit,writeBatch} from 'firebase/firestore';
@@ -77,7 +77,7 @@ export class LibraryStore {
  manages(c){return this.mode==='local'||(this.canCreateClass()&&(this.isAdmin===true||c?.teacherEmail===this.user.email.toLowerCase()));}
  async canManageId(id){if(this.mode==='local')return true;return this.manages({...(await getDoc(doc(this.classCollection(),id))).data()});}
  async updateClass(c,changes){
-  const nextData=latest=>{if(latest.deleting)throw Error('삭제 중인 학급입니다. 학급 삭제를 다시 눌러 남은 정리를 완료해 주세요.');if(!this.manages(latest))throw Error('이 학급의 담당 교사만 설정을 바꿀 수 있어요.');if(this.mode==='firebase'&&!this.isAdmin&&Object.keys(changes).some(key=>!['name','capacity','accepting','autoPublish'].includes(key)))throw Error('담당 교사 배정은 관리자만 할 수 있어요.');const data={name:latest.name,createdAt:latest.createdAt,teacherEmail:latest.teacherEmail,accepting:latest.accepting===true,autoPublish:latest.autoPublish===true,capacity:classCapacity(latest),...changes};assertCapacity(data.capacity);return data;};
+  const nextData=latest=>{if(latest.deleting)throw Error('삭제 중인 학급입니다. 학급 삭제를 다시 눌러 남은 정리를 완료해 주세요.');if(!this.manages(latest))throw Error('이 학급의 담당 교사만 설정을 바꿀 수 있어요.');if(this.mode==='firebase'&&!this.isAdmin&&Object.keys(changes).some(key=>!['name','capacity','accepting','autoPublish','themeId'].includes(key)))throw Error('담당 교사 배정은 관리자만 할 수 있어요.');const data={name:latest.name,createdAt:latest.createdAt,teacherEmail:latest.teacherEmail,accepting:latest.accepting===true,autoPublish:latest.autoPublish===true,capacity:classCapacity(latest),...(latest.themeId?{themeId:latest.themeId}:{}),...changes};assertCapacity(data.capacity);if(data.themeId&&!themes.some(t=>t.id===data.themeId))throw Error('올바른 숲 테마를 선택해 주세요.');return data;};
   if(this.mode==='local'){const latest=await this.getClass(c.id);if(!latest)throw Error('학급을 찾을 수 없어요.');await this.write('classes',{id:c.id,...nextData(latest)});return;}
   await runTransaction(this.firestore,async tx=>{const dest=doc(this.classCollection(),c.id),snapshot=await tx.get(dest);if(!snapshot.exists())throw Error('학급을 찾을 수 없어요.');tx.set(dest,nextData(snapshot.data()));});
  }

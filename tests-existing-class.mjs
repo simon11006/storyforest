@@ -43,6 +43,7 @@ try{
  assert.equal((await savedStore.books('existing')).length,30);
  $('#classPolicy input[type=number]').value='30';await $('#classPolicy button').onclick();await tick();
  assert.equal($('#bookCount').textContent,'30');assert.equal(document.querySelectorAll('.book-tile').length,30);assert.equal(scene.books.length,30);assert.equal($('[data-zone="2"]').hidden,false);
+ const themeSelect=document.querySelector('[aria-label="우리 반 도서관 테마"]');assert.equal(themeSelect.options.length,12);themeSelect.value='tropical-1';await [...document.querySelectorAll('#classPolicy button')].find(b=>b.textContent==='테마 변경 저장').onclick();assert.equal((await savedStore.getClass('existing')).themeId,'tropical-1');
  returnHome();assert.equal($('#entryLobby').open,true);assert.equal($('#manager').open,false);assert.equal(document.querySelector('main').inert,true);console.log('PASS completion navigation closes management and restores the class selection lobby');
  console.log('PASS existing class 30 → 20 → 30: saved settings, gallery, catalog, counters, slots, zones, and retained works');
 }finally{globalThis.fetch=originalFetch;dom.window.close();}

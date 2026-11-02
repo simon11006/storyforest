@@ -53,8 +53,8 @@ export function buildForest(g) {
  buildReaders(g);
  // Classroom themes populate these existing planter footprints with distinct plants.
  // Dense leaf clusters above the display walls: shared instancing, not hundreds of draw calls.
- const leaves=new THREE.InstancedMesh(new THREE.SphereGeometry(1,7,5),mat('#497554'),240);
- const dummy=new THREE.Object3D();for(let i=0;i<240;i++){let side=i%2?1:-1;dummy.position.set(side*(9.25-Math.sin(i*2.4)*.35),4.8+Math.sin(i*1.8)*.3,23-(i/2|0)*.39);dummy.scale.set(.55,.19,.4);dummy.rotation.set(i*.3,i*2.4,i*.6);dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);}scene.add(leaves);
+ const leaves=new THREE.InstancedMesh(new THREE.PlaneGeometry(.5,.7),mat('#497554',{side:THREE.DoubleSide}),240);
+ const dummy=new THREE.Object3D();for(let i=0;i<240;i++){let side=i%2?1:-1;dummy.position.set(side*(9.25-Math.sin(i*2.4)*.35),4.8+Math.sin(i*1.8)*.3,23-(i/2|0)*.39);dummy.scale.set(1.4,1.5,1);dummy.rotation.set(Math.sin(i)*.25,side*Math.PI/2+Math.sin(i*2.4)*.2,i*.6);dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);}scene.add(leaves);
  // Full-height bookcases at the far end give the walk a destination.
  box(20,8,.4,0,4,-24,teal);
  for(const x of [-7,-3.5,3.5,7]){
@@ -67,7 +67,7 @@ export function buildForest(g) {
  const dustGeo=new THREE.BufferGeometry(),p=[];for(let i=0;i<100;i++)p.push(Math.sin(i*12.3)*8,2+(i%17)/4,23-(i*7%47));dustGeo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.fireflies=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#ffe3a4',size:.045,transparent:true,opacity:.65,depthWrite:false}));scene.add(g.fireflies);
  scene.background=new THREE.Color('#203d42');scene.fog=new THREE.Fog('#294b48',28,85);
  scene.add(new THREE.HemisphereLight('#e2f4ef','#775332',2.5));const sun=new THREE.DirectionalLight('#ffdfad',3);sun.position.set(-5,12,20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-14,right:14,top:29,bottom:-29,near:1,far:80});sun.shadow.normalBias=.035;sun.target.position.set(0,0,-8);scene.add(sun,sun.target);
- const fill=new THREE.DirectionalLight('#96d7dd',1.8);fill.position.set(5,6,-20);scene.add(fill);lights.push(sun);g.environment={wall:teal,ceiling,gold,wood,carpets,lights,fill,leaves,zoneSigns,floorMarks};
+ const fill=new THREE.DirectionalLight('#96d7dd',1.8);fill.position.set(5,6,-20);scene.add(fill);lights.push(sun);g.environment={floor:floor.material,wall:teal,ceiling,gold,wood,carpets,lights,fill,leaves,zoneSigns,floorMarks};
  // This fixed room surrounds the viewer. Keep its enclosing architecture visible
  // at the entrance and while turning; exhibition frames retain normal culling.
  scene.traverse(object=>{if(object.isMesh)object.frustumCulled=false;});

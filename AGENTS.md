@@ -32,3 +32,5 @@
 - On refresh or home navigation, preserve authentication but show the class-selection lobby; never automatically open management merely because a saved teacher/admin session was restored. Open management only following an explicit management/login action. This supersedes automatic management landing for restored sessions.
 
 - Persist class themeId at creation: randomly choose among the least represented forest families, then their least-used variants. Existing assigned themeId must survive rename, new classes and reloads. Legacy ID hashing is a fallback only. The user authorized a one-time balanced migration of existing classrooms on 2026-11-02.
+
+- Assigned teachers and administrators may explicitly change themeId through Our Class Management. Persist the choice, preserve it on unrelated settings saves, and keep automatic balancing only for newly created classes.
