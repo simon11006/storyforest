@@ -27,9 +27,9 @@ export function buildForest(g) {
   for(const zz of [z+1.8,z-9.8])box(5.1,.012,.035,0,.045,zz,gold);
   const medal=mesh(new THREE.RingGeometry(.85,.89,64),gold,0,.05,z-2);medal.rotation.x=-Math.PI/2;
   const star=g.label('❧',1.1,1.1,{background:color,color:'#e6c58b',font:100});star.rotation.x=-Math.PI/2;star.position.set(0,.052,z-2);scene.add(star);floorMarks.push(star);
-  // Large welcoming portals frame the route without blocking the walking area.
-  for(const x of [-6.7,6.7]){box(.5,5.5,.6,x,2.75,z+1.8,wood);box(.8,.3,.9,x,.15,z+1.8,stone);box(.7,.18,.8,x,4.7,z+1.8,gold);}
-  const arch=[];for(let i=0;i<=32;i++){let a=i/32*Math.PI;arch.push(new THREE.Vector3(6.7*Math.cos(a),4.7+1.7*Math.sin(a),z+1.8));}
+  // Portals sit behind the display planes, outside the walkable aisle.
+  for(const x of [-9.45,9.45]){box(.5,5.5,.6,x,2.75,z+1.8,wood).name='portal-column';box(.8,.3,.9,x,.15,z+1.8,stone).name='portal-base';box(.7,.18,.8,x,4.7,z+1.8,gold);}
+  const arch=[];for(let i=0;i<=32;i++){let a=i/32*Math.PI;arch.push(new THREE.Vector3(9.45*Math.cos(a),4.7+1.7*Math.sin(a),z+1.8));}
   mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arch),40,.22,8,false),wood,0,0,0);
   const sign=g.label(`0${zone+1}  ${names[zone]}`,3.7,.6,{background:color,color:'#fff0cb',font:58});sign.position.set(0,5.5,z+2.05);scene.add(sign);zoneSigns.push(sign);
   for(const x of [-4,4]){
