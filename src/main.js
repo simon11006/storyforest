@@ -68,7 +68,7 @@ function openClassSetup(){
 $('#lobbyTeacherBtn').onclick=$('#classesTeacherBtn').onclick=$('#classesManageBtn').onclick=openTeacherHome;$('#managerCreateClass').onclick=openClassSetup;$('#lobbyRetry').onclick=()=>location.reload();
 function renderClasses(){
  const visible=listedClasses(),selection=$('#switchClassSelect').value||current?.id;fillClassSelect($('#switchClassSelect'),visible,'학급 선택하기',selection);
- const human=!!store.user&&!store.user.isAnonymous,canCreate=store.canCreateClass()&&!preview;$('#classesSession').hidden=!human;$('#classesAccountEmail').textContent=human?store.user.email:'';$('#classesManageBtn').textContent=canCreate?'우리 반 관리':'내 계정';$('#classesLogoutBtn').disabled=loggingOut;
+ const human=!!store.user&&!store.user.isAnonymous,canCreate=store.canCreateClass()&&!preview;$('#lobbySession').hidden=!human;$('#lobbyAccountEmail').textContent=human?store.user.email||'':'';$('#lobbyLogoutBtn').disabled=loggingOut;$('#classesSession').hidden=!human;$('#classesAccountEmail').textContent=human?store.user.email:'';$('#classesManageBtn').textContent=canCreate?'우리 반 관리':'내 계정';$('#classesLogoutBtn').disabled=loggingOut;
  $('#createClassForm button').disabled=!canCreate;$('.class-create').hidden=!canCreate;$('#classesTeacherBtn').hidden=human;$('#classCreateNote').textContent=store.isAdmin?'학급을 개설하면 나를 담당 교사로 지정합니다. 다른 교사 배정은 전체 학급 설정에서 변경할 수 있어요.':'학급을 개설하면 내가 담당 교사로 지정됩니다. 내 학급의 작품과 제출함을 관리할 수 있어요.';updateClassActions();renderLobby();
 }
 function renderExhibition(){
@@ -115,12 +115,12 @@ $('#verifyEmail').onclick=async()=>{try{await store.verify();status('#managerSta
 $('#refreshAuth').onclick=async()=>{try{await store.refreshAuth();status('#managerStatus',store.canRead?'이메일 인증을 확인했습니다. 이제 내 학급을 개설하고 관리할 수 있어요.':store.user?.emailVerified?'이메일 인증은 완료되었습니다. 계정 연결을 다시 확인해 주세요.':'이메일 인증이 아직 완료되지 않았어요.');}catch(e){status('#managerStatus',friendly(e),true);}};
 $('#resetPassword').onclick=async()=>{const email=$('#loginForm input[name=email]').value.trim();if(!email){status('#managerStatus','먼저 이메일을 입력해 주세요.',true);return;}try{await store.resetPassword(email);status('#managerStatus','가입된 이메일이라면 비밀번호 재설정 메일을 받을 수 있어요.');}catch(e){status('#managerStatus',friendly(e),true);}};
 async function logoutTeacher(){
- if(loggingOut)return;loggingOut=true;$('#logout').disabled=$('#classesLogoutBtn').disabled=true;
+ if(loggingOut)return;loggingOut=true;$('#logout').disabled=$('#classesLogoutBtn').disabled=$('#lobbyLogoutBtn').disabled=true;
  try{await store.logout();creationIntent=false;teacherSessionKey='';managedChoice=null;$('#managedClassSelect').value='';$('#manager').close();$('#classesDialog').close();renderClasses();renderManager();toast('로그아웃했어요.');if(!current)showLobby(true);}
- catch(e){status('#managerStatus',friendly(e),true);status('#classesStatus',friendly(e),true);}
- finally{loggingOut=false;$('#logout').disabled=$('#classesLogoutBtn').disabled=false;}
+ catch(e){status('#managerStatus',friendly(e),true);status('#classesStatus',friendly(e),true);status('#lobbyStatus',friendly(e),true);}
+ finally{loggingOut=false;$('#logout').disabled=$('#classesLogoutBtn').disabled=$('#lobbyLogoutBtn').disabled=false;}
 }
-$('#logout').onclick=$('#classesLogoutBtn').onclick=logoutTeacher;
+$('#logout').onclick=$('#classesLogoutBtn').onclick=$('#lobbyLogoutBtn').onclick=logoutTeacher;
 async function authChanged(){
  const g=++authLoading;preview=false;try{const next=await store.classes();if(g!==authLoading)return;classes=next;classesLoaded=true;entryError='';
  const key=store.user&&!store.user.isAnonymous&&store.canCreateClass()?store.user.email||'local':'',entered=!!key&&key!==teacherSessionKey,mine=managedClasses();let choice=classes.find(c=>c.id===current?.id);if(entered){managedChoice=null;if(mine.length===1)choice=mine[0];}

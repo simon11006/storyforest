@@ -90,3 +90,5 @@ header{height:76px;background:#163d37;color:#f1e6cc;border-bottom:1px solid #c4a
 .book-edit{width:min(520px,calc(100vw - 32px));box-sizing:border-box;padding:28px;border:2px solid #b99a62;border-radius:16px;background:#fff3d7;color:#49351e}.book-edit::backdrop{background:#102b2588}.book-edit label{display:block;margin:16px 0}.book-edit input{display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:12px;border:1px solid #ac8b5a;border-radius:8px}.book-edit button{padding:12px 20px;margin-right:8px;border-radius:8px}.book-edit button[type=submit]{background:#245b48;color:white}
 
 .manage-item>span{flex:1;min-width:0}.manage-item [data-edit-book]{padding:7px 12px;border:1px solid #9c8051;border-radius:6px;color:#4d3b20;font-size:12px}
+
+#lobbySession{margin:0 0 20px;gap:16px;flex-wrap:wrap}#lobbySession[hidden]{display:none}#lobbySession span{min-width:0;overflow-wrap:anywhere}#lobbySession small{font-size:12px}#lobbyAccountEmail{font-size:15px}#lobbyLogoutBtn{flex-shrink:0}
