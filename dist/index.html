@@ -1,8 +1,10 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#263e36"><title>이야기숲 | 우리 반 이야기 도서관</title><meta name="description" content="학급마다 펼쳐지는 우리들의 이야기. 학생들이 만든 책을 1인칭으로 걸으며 만나는 3D 전시관."><link rel="preload" href="vendor/fonts/GowunBatang-Regular.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="style.css"></head><body class="choosing-class">
 <dialog id="entryLobby" class="entry-lobby parchment-dialog" aria-labelledby="lobbyTitle" hidden>
  <div class="scroll-sheet"><div class="entry-shell"><a class="brand entry-brand" href="./"><span class="brand-mark">s<span>f</span></span><span>이야기숲<small>STORY FOREST</small></span></a>
- <div class="lobby-view-actions"><button type="button" class="outline" data-fullscreen>⤢ 전체화면</button></div>
- <div id="lobbySession" class="account-bar" hidden><span><small>로그인된 계정</small><br><strong id="lobbyAccountEmail"></strong></span><button id="lobbyLogoutBtn" class="outline" type="button">로그아웃</button></div>
+ <div class="lobby-toolbar" aria-label="계정 및 화면 설정">
+  <div id="lobbySession" hidden><div class="lobby-account"><span class="account-caption">로그인된 계정</span><strong id="lobbyAccountEmail"></strong></div><button id="lobbyLogoutBtn" class="outline" type="button">로그아웃</button></div>
+  <button type="button" class="outline lobby-fullscreen" data-fullscreen>⤢ 전체화면</button>
+ </div>
  <div class="entry-intro" tabindex="-1" autofocus><h1 id="lobbyTitle">이야기숲에 오신 것을 환영해요</h1><p>친구들이 만든 책을 만나러 가 볼까요?</p></div>
 
  <section class="entry-destinations" aria-labelledby="lobbyDestinationsTitle"><div class="destination-heading"><h2 id="lobbyDestinationsTitle">방문할 학급 도서관</h2></div><p id="lobbyStatus" class="status" role="status">학급 도서관을 불러오고 있어요…</p>
