@@ -7,7 +7,7 @@ export const baseThemes=[
  {name:'열대의 숲',kind:'tropical',wall:'#2e5b42',ceiling:'#a8dacc',carpet:'#527a44',accent:'#c7b06a',wood:'#59442e',frame:'#274b34',pale:'#e9e3c8',light:'#ffe8bb',fill:'#afd5a8'}
 ];
 const variants=[
- [{name:'벚꽃 숲',treeShape:'cherry',wall:'#ffe0eb',ceiling:'#eaf8ff',carpet:'#f290bd',wood:'#b98967',frame:'#c95186',accent:'#fff0cb',pale:'#fff6fa',light:'#fff7fc',fill:'#fff0fa',plants:['#ed6ea6','#ffb8d7','#fff0f7']},{name:'연둣빛 새순 숲',treeShape:'broadleaf',wall:'#536b49',carpet:'#8c9e5b',plants:['#739956','#9eb571','#c1ce91']},{name:'목련 숲',treeShape:'magnolia',wall:'#b5c4ac',ceiling:'#fff3de',carpet:'#91a889',frame:'#647d65',plants:['#6b8956','#d8d4b7','#fff0d9']}],
+ [{name:'벚꽃 숲',treeShape:'cherry',wall:'#ffe0eb',ceiling:'#eaf8ff',carpet:'#efb1cf',wood:'#b98967',frame:'#ae617e',accent:'#fff0cb',pale:'#fff6fa',light:'#fff7fc',fill:'#fff0fa',plants:['#fff7fb','#ffe2ef','#ffc7df']},{name:'연둣빛 새순 숲',treeShape:'broadleaf',wall:'#536b49',carpet:'#8c9e5b',plants:['#739956','#9eb571','#c1ce91']},{name:'목련 숲',treeShape:'magnolia',wall:'#b5c4ac',ceiling:'#fff3de',carpet:'#91a889',frame:'#647d65',plants:['#6b8956','#d8d4b7','#fff0d9']}],
  [{name:'참나무 숲',treeShape:'oak',wall:'#355e49',carpet:'#5d8356',plants:['#3d7145','#64874b','#8aa45e']},{name:'자작나무 숲',treeShape:'birch',wall:'#4d6952',carpet:'#7c9368',plants:['#72985a','#96b773','#bdd09a']},{name:'소나무 숲',treeShape:'pine',wall:'#345743',carpet:'#58774c',plants:['#315e42','#497651','#73946a']}],
  [{name:'단풍 숲',treeShape:'maple',wall:'#78573e',carpet:'#af7948',plants:['#bc492c','#ed7d28','#ffbd55']},{name:'은행나무 숲',treeShape:'ginkgo',wall:'#70613d',carpet:'#b09b4f',plants:['#d1a40c','#f3cf38','#ffe989']},{name:'노을빛 참나무 숲',treeShape:'oak',wall:'#795947',carpet:'#a57c58',plants:['#9b633e','#bd8950','#d4ab6d']}],
  [{name:'야자 숲',treeShape:'palm',wall:'#2e5b42',carpet:'#527a44',plants:['#1b704b','#399557','#7abe65']},{name:'바나나 잎 숲',treeShape:'banana',wall:'#426447',carpet:'#6b8c4c',plants:['#4f7d3e','#72964e','#a2b672']},{name:'열대우림',treeShape:'rainforest',wall:'#284e3b',carpet:'#416b43',plants:['#2e6240','#4c7b47','#7c9c5c']}]
@@ -22,8 +22,8 @@ export function chooseClassTheme(classes,random=Math.random){
 export function classStyle(c){const seed=classSeed(c),theme=classTheme(c);return{...theme,seed,frameStyle:theme.variant,patternTurn:theme.variant*.17,crownScale:[1,.94,1.08][theme.variant]};}
 function disposeDecor(group){const geometries=new Set(),materials=new Set(),textures=new Set();group?.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[]){materials.add(m);if(m.map)textures.add(m.map);}});textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose());}
 function leafShape(){const shape=new THREE.Shape();shape.moveTo(0,-.25);shape.bezierCurveTo(-.25,-.08,-.19,.15,0,.29);shape.bezierCurveTo(.19,.15,.25,-.08,0,-.25);return shape;}
-function flowerShape(){const shape=new THREE.Shape();for(let i=0;i<=100;i++){const a=i/100*Math.PI*2,r=.22+.075*Math.cos(5*a),x=Math.cos(a)*r,y=Math.sin(a)*r;i?shape.lineTo(x,y):shape.moveTo(x,y);}return shape;}
-function wallFoliageGeometry(t){const geometry=new THREE.ShapeGeometry(t.treeShape==='cherry'||t.treeShape==='magnolia'?flowerShape():t.treeShape==='maple'?mapleShape():t.treeShape==='ginkgo'?ginkgoShape():t.treeShape==='pine'?needleShape():leafShape(),8);const p=geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,.22*p.getX(i)*p.getX(i));geometry.computeVertexNormals();return geometry;}
+function flowerShape(){const shape=new THREE.Shape();for(let i=0;i<=50;i++){const a=i/50*Math.PI*2,r=.22+.075*Math.cos(5*a),x=Math.cos(a)*r,y=Math.sin(a)*r;i?shape.lineTo(x,y):shape.moveTo(x,y);}return shape;}
+function wallFoliageGeometry(t){const geometry=new THREE.ShapeGeometry(t.treeShape==='cherry'||t.treeShape==='magnolia'?flowerShape():t.treeShape==='maple'?mapleShape():t.treeShape==='ginkgo'?ginkgoShape():t.treeShape==='pine'?needleShape():leafShape(),8);const p=geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,['cherry','magnolia'].includes(t.treeShape)?1.5*(p.getX(i)**2+p.getY(i)**2):.22*p.getX(i)*p.getX(i));geometry.computeVertexNormals();return geometry;}
 function ginkgoShape(){const shape=new THREE.Shape();shape.moveTo(0,-.22);for(let i=0;i<=20;i++){const a=.15+i/20*(Math.PI-.3);shape.lineTo(Math.cos(a)*.3,Math.sin(a)*.3-.05);}shape.lineTo(0,-.22);return shape;}
 function needleShape(){const shape=new THREE.Shape();shape.moveTo(0,-.3);shape.lineTo(-.025,.2);shape.lineTo(0,.36);shape.lineTo(.025,.2);shape.closePath();return shape;}
 function mapleShape(){return new THREE.Shape([[-.03,-.24],[.03,-.24],[.02,-.1],[.17,-.14],[.12,-.04],[.25,.02],[.14,.08],[.17,.19],[.07,.14],[0,.3],[-.07,.14],[-.17,.19],[-.14,.08],[-.25,.02],[-.12,-.04],[-.17,-.14],[-.02,-.1]].map(([x,y])=>new THREE.Vector2(x,y)));}
@@ -72,29 +72,31 @@ function addForestCanopy(g,group,t){
  const segments=[],foliage=[],colors=foliageColors(t).map(c=>new THREE.Color(c));let seed=t.seed;
  const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  const segment=(a,b,r)=>segments.push({a:a.clone(),b:b.clone(),r});
- for(const side of [-1,1])for(const z of [-20,-10,0,10,20]){
-  const bend=(random()-.5)*1.6;
-  const main=new THREE.CatmullRomCurve3([new THREE.Vector3(side*9.25,4.7,z),new THREE.Vector3(side*7.4,6.5,z+bend),new THREE.Vector3(side*4.2,7.7,z+.7+bend),new THREE.Vector3(side*.6,8,z+1.2+bend)]);
-  for(let i=0;i<16;i++)segment(main.getPoint(i/16),main.getPoint((i+1)/16),.13*(1-i/20));
-  for(let j=0;j<8;j++){
-   const u=.2+j*.1,base=main.getPoint(u),direction=j%2?1:-1;
-   const tip=base.clone().add(new THREE.Vector3(-side*(.5+random()*.5),.05+random()*.15,direction*(1.4+random()*.6)));
+ for(const side of [-1,1])for(const station of [-22,-14.5,-6,1.7,9,16.6,23]){
+  const z=station+(random()-.5)*2,bend=(random()-.5)*3,height=6.8+random()*1.1,root=new THREE.Vector3(side*9.25,4.8,z);
+  const trunk=new THREE.CatmullRomCurve3([new THREE.Vector3(side*9.65,0,z-.35),new THREE.Vector3(side*9.5,2.3,z+.2),root]);
+  for(let i=0;i<8;i++)segment(trunk.getPoint(i/8),trunk.getPoint((i+1)/8),.32-i*.018);
+  const main=new THREE.CatmullRomCurve3([root,new THREE.Vector3(side*(6.5+random()),5.9,z+bend),new THREE.Vector3(side*(3+random()),height,z+1+bend),new THREE.Vector3(side*(random()-.3),height-.15,z+1.8+bend)]);
+  for(let i=0;i<16;i++)segment(main.getPoint(i/16),main.getPoint((i+1)/16),.19*(1-i/19));
+  for(let j=0;j<10;j++){
+   const u=.18+j*.08,base=main.getPoint(u),direction=j%2?1:-1;
+   const tip=base.clone().add(new THREE.Vector3(-side*(.5+random()*.7),-.1+random()*.4,direction*(1.8+random()*1.5)));
    const twig=new THREE.QuadraticBezierCurve3(base,base.clone().lerp(tip,.5).add(new THREE.Vector3(0,.2,0)),tip);
    for(let k=0;k<4;k++)segment(twig.getPoint(k/4),twig.getPoint((k+1)/4),.035*(1-k*.17));
-   for(let k=0;k<5;k++){
-    const node=twig.getPoint(.25+k*.18),count=flowering?3:2;
+   for(let k=0;k<6;k++){
+    const node=twig.getPoint(.18+k*.16),count=flowering?6:2;
     for(let n=0;n<count;n++){
-     const angle=j*1.8+k*2.4+n*Math.PI*2/count,anchor=node.clone().add(new THREE.Vector3(Math.cos(angle)*.18,-.04-random()*.1,Math.sin(angle)*.18));
+     const angle=j*1.8+k*2.4+n*Math.PI*2/count,anchor=node.clone().add(new THREE.Vector3(Math.cos(angle)*(.2+random()*.25),-.03-random()*.3,Math.sin(angle)*(.2+random()*.25)));
      segment(node,anchor,.012);
-     foliage.push({anchor,angle,tilt:(random()-.5)*.55,scale:flowering?.85+random()*.35:tropical?.65+random()*.25:.95+random()*.5,color:colors[(j+k+n+Math.floor(random()*3))%colors.length]});
+     foliage.push({anchor,angle,tilt:(random()-.5)*(flowering?1.4:.55),scale:flowering?.85+random()*.35:tropical?.65+random()*.25:.95+random()*.5,color:colors[(j+k+n+Math.floor(random()*3))%colors.length]});
     }
    }
   }
  }
  const dummy=new THREE.Object3D(),up=new THREE.Vector3(0,1,0),branches=new THREE.InstancedMesh(new THREE.CylinderGeometry(.72,1,1,6),g.material(t.kind==='spring'?'#78503c':t.wood),segments.length);
  branches.name='canopy-branches';segments.forEach(({a,b,r},i)=>{dummy.position.copy(a).lerp(b,.5);dummy.quaternion.setFromUnitVectors(up,b.clone().sub(a).normalize());dummy.scale.set(r,a.distanceTo(b),r);dummy.updateMatrix();branches.setMatrixAt(i,dummy.matrix);});group.add(branches);
- const leaves=new THREE.InstancedMesh(geometry,g.material('#ffffff',{side:THREE.DoubleSide,roughness:.9}),foliage.length);leaves.name='forest-ceiling-canopy';leaves.userData.kind=t.kind;
- foliage.forEach(({anchor,angle,tilt,scale,color},i)=>{dummy.position.copy(anchor);dummy.rotation.set(tropical?tilt:-Math.PI/2+tilt,0,angle);dummy.scale.setScalar(scale);dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);leaves.setColorAt(i,color);});group.add(leaves);
+ const leaves=new THREE.InstancedMesh(geometry,g.material('#ffffff',{side:THREE.DoubleSide,roughness:.9,emissive:flowering?'#ffdae9':'#000000',emissiveIntensity:flowering?.32:0}),foliage.length);leaves.name='forest-ceiling-canopy';leaves.userData.kind=t.kind;
+ foliage.forEach(({anchor,angle,tilt,scale,color},i)=>{dummy.position.copy(anchor);dummy.rotation.set(tropical?tilt:-Math.PI/2+tilt,tropical?angle:0,tropical?0:angle);dummy.scale.setScalar(scale);dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);leaves.setColorAt(i,color);});group.add(leaves);
  if(t.kind==='autumn'){
   const fallen=new THREE.InstancedMesh(wallFoliageGeometry({...t,treeShape:'maple'}),leaves.material,140);fallen.name='fallen-autumn-leaves';
   for(let i=0;i<fallen.count;i++){dummy.position.set((i%2?1:-1)*(4.8+random()*2),.035,random()*45-22.5);dummy.rotation.set(-Math.PI/2,0,random()*Math.PI*2);dummy.scale.setScalar(.35+random()*.4);dummy.updateMatrix();fallen.setMatrixAt(i,dummy.matrix);fallen.setColorAt(i,colors[i%colors.length]);}group.add(fallen);
@@ -104,7 +106,7 @@ export function applyClassTheme(g,c){
  if(!g.renderer)return;const t=classStyle(c),key=`${c?.id||''}:${c?.name||''}:${t.id}:${t.seed}`;g.theme=t;if(g.themeKey===key)return;g.themeKey=key;
  const e=g.environment;e.wall.color.set(t.wall);e.ceiling.color.set(t.ceiling);e.gold.color.set(t.accent);e.wood.color.set(t.wood);e.carpets.forEach(m=>m.color.set(t.carpet));e.lights.forEach(l=>l.color.set(t.light));e.fill.color.set(t.fill);
  e.ceiling.map?.dispose();e.ceiling.map=ceilingTexture(g,t);e.ceiling.needsUpdate=true;
- g.scene.background.set('#8d9e94');g.scene.fog.color.set('#a9b2a3');g.scene.fog.near=55;g.scene.fog.far=130;g.fireflies.material.color.set(t.accent);e.leaves.visible=true;e.leaves.material.color.set(t.plants[t.treeShape==='cherry'?1:0]);e.leaves.geometry.dispose();e.leaves.geometry=wallFoliageGeometry(t);e.leaves.material.side=THREE.DoubleSide;e.floor?.color.set({spring:'#e3cfb7',summer:'#bec8a1',autumn:'#cda575',tropical:'#9daf8d'}[t.kind]);
+ g.scene.background.set(t.ceiling);g.scene.fog.color.set(t.ceiling);g.scene.fog.near=55;g.scene.fog.far=130;g.fireflies.material.color.set(t.accent);e.leaves.visible=false;e.leaves.material.color.set(t.plants[t.treeShape==='cherry'?1:0]);e.leaves.geometry.dispose();e.leaves.geometry=wallFoliageGeometry(t);e.leaves.material.side=THREE.DoubleSide;e.floor?.color.set({spring:'#e3cfb7',summer:'#bec8a1',autumn:'#cda575',tropical:'#9daf8d'}[t.kind]);
  e.leaves.material.color.set('#ffffff');const wallColors=foliageColors(t);for(let i=0;i<e.leaves.count;i++)e.leaves.setColorAt(i,new THREE.Color(wallColors[i%wallColors.length]));e.leaves.instanceColor.needsUpdate=true;
  const zoneNames={spring:['새순의 문','꽃나무 길','봄빛 서가'],summer:['나무 그늘','초록 잎길','여름 서가'],autumn:['단풍의 문','낙엽 길','노을 서가'],tropical:['큰 잎의 문','야자 그늘','우림 서가']};
  e.zoneSigns.forEach((sign,i)=>{sign.material.map?.dispose();sign.material.map=g.texture((ctx,w,h)=>{ctx.fillStyle=t.frame;ctx.fillRect(0,0,w,h);ctx.fillStyle=t.pale;ctx.font='bold 90px "Malgun Gothic",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`0${i+1}  ${zoneNames[t.kind][i]}`,w/2,h/2,w-40);},1024,256);});

@@ -12,11 +12,13 @@ const gallery=Object.create(Gallery.prototype);
 gallery.scene=new THREE.Scene();gallery.renderer={shadowMap:{}};gallery.texture=()=>new THREE.Texture();gallery.buildRoom();
 const columns=gallery.scene.children.filter(o=>['portal-column','portal-base'].includes(o.name));assert.equal(columns.length,12);gallery.scene.updateMatrixWorld(true);for(const column of columns){const box=new THREE.Box3().setFromObject(column);assert.ok(box.min.x>9||box.max.x< -9,'columns and bases must be behind displays and outside the aisle');}const roomObjects=gallery.scene.children.length;
 const seen=new Set();
+assert.equal(gallery.scene.getObjectByName('library-vault').visible,false,'the forest must have an open sky instead of an architectural roof');
 const luminance=hex=>{const c=new THREE.Color(hex);return .2126*c.r+.7152*c.g+.0722*c.b;};
 for(const theme of themes){const palette=welcomePalette(theme);assert.ok((luminance(palette.background)+.05)/(luminance(palette.ink)+.05)>=7,'welcome sign text must have at least 7:1 contrast in every theme');}
 for(let i=1;i<=40;i++){
  const cls={id:`class-${i}`,name:`3학년 ${i}반`};gallery.setClass(cls);
  seen.add(classTheme(cls).id);
+ if(classTheme(cls).treeShape==='cherry')assert.ok(gallery.classDecor.getObjectByName('forest-ceiling-canopy').count>=4000,'cherry blossoms should form dense flowering crowns');
  const branchMesh=gallery.classDecor.getObjectByName('canopy-branches'),leafMesh=gallery.classDecor.getObjectByName('forest-ceiling-canopy'),matrix=new THREE.Matrix4();
  const branchTips=[];
  for(let n=0;n<branchMesh.count;n++){branchMesh.getMatrixAt(n,matrix);branchTips.push(new THREE.Vector3(0,.5,0).applyMatrix4(matrix));}
