@@ -3,7 +3,7 @@ import {slotPosition,canStand} from './src/gallery.js';
 import {LibraryStore,assertSlot} from './src/store.js';
 import * as THREE from 'three';
 import {Gallery} from './src/gallery.js';
-import {classTheme, classStyle, baseThemes, themes} from './src/themes.js';
+import {classTheme, classStyle, baseThemes, themes, chooseClassTheme} from './src/themes.js';
 import {classCapacity,assertCapacity,availableSlots,exhibitedBooks} from './src/capacity.js';
 assert.equal(canStand(0,16.5),false);
 assert.equal(canStand(2.5,16.5),true);
@@ -64,3 +64,5 @@ console.log('PASS per-class capacity, retained books after reductions, restored 
 s.mode='firebase';s.role='teacher';s.user={email:'teacher@example.com',emailVerified:true};assert.equal(s.manages({teacherEmail:'teacher@example.com'}),true);assert.equal(s.manages({teacherEmail:'other@example.com'}),false);s.role='student';assert.equal(s.manages({teacherEmail:'teacher@example.com'}),false);s.isAdmin=true;assert.equal(s.manages({teacherEmail:'other@example.com'}),true);s.user.emailVerified=false;assert.equal(s.canCreateClass(),false);assert.equal(s.manages({teacherEmail:'teacher@example.com'}),false);console.log('PASS class ownership and super administrator UI permissions');
 
 s.mode='local';const doomed=await s.addClass('작품이 있는 학급',3);await s.addBook(doomed.id,{slot:1,title:'삭제할 책',author:'작가'});s.memory.submissions=new Map([['pending',{classId:doomed.id}],['other',{classId:'class-a'}]]);await s.deleteClass(doomed);assert.equal(await s.getClass(doomed.id),undefined);assert.equal((await s.books(doomed.id)).length,0);assert.equal(s.memory.submissions.has('pending'),false);assert.equal(s.memory.submissions.has('other'),true);assert.equal((await s.books('class-a')).length,1);console.log('PASS local populated-class cascade and classroom isolation');
+
+const balanced=[];for(let i=0;i<24;i++){const themeId=chooseClassTheme(balanced);balanced.push({id:'balanced-'+i,name:'학급',themeId});const counts=baseThemes.map(f=>balanced.filter(c=>classTheme(c).kind===f.kind).length);assert.ok(Math.max(...counts)-Math.min(...counts)<=1);}for(const t of themes)assert.equal(balanced.filter(c=>c.themeId===t.id).length,2);for(const c of balanced)assert.equal(classTheme(c),classTheme({...c,name:'이름 변경'}));console.log('PASS balanced family/variant allocation and persisted theme stability');

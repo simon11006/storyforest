@@ -30,3 +30,5 @@
 - After verified teacher login, show the teacher management home with an owned-class selector, classroom creation, and a visible logout action. Open the sole assigned classroom automatically; require an explicit management choice when there are multiple owned classes. Visiting another teacher’s public classroom must not expose its management UI. All-class navigation uses a native dropdown rather than a card grid. Keep logout in the sticky management header and clear private management UI after sign-out.
 
 - On refresh or home navigation, preserve authentication but show the class-selection lobby; never automatically open management merely because a saved teacher/admin session was restored. Open management only following an explicit management/login action. This supersedes automatic management landing for restored sessions.
+
+- Persist class themeId at creation: randomly choose among the least represented forest families, then their least-used variants. Existing assigned themeId must survive rename, new classes and reloads. Legacy ID hashing is a fallback only. The user authorized a one-time balanced migration of existing classrooms on 2026-11-02.

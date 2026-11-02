@@ -1,3 +1,4 @@
+import {chooseClassTheme} from './themes.js';
 import {initializeApp} from 'firebase/app';
 import {getAuth,signInAnonymously,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,reload,signOut,onAuthStateChanged,getIdToken} from 'firebase/auth';
 import {getFirestore,collection,doc,getDoc,getDocs,setDoc,runTransaction,deleteDoc,onSnapshot,query,limit,writeBatch} from 'firebase/firestore';
@@ -21,7 +22,7 @@ export class LibraryStore {
  async classes(){if(this.mode==='local')return(await this.all('classes')).sort((a,b)=>a.createdAt-b.createdAt);return(await getDocs(this.classCollection())).docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.name.localeCompare(b.name,'ko'));}
  async getClass(id){if(this.mode==='local')return(await this.all('classes')).find(c=>c.id===id);const snapshot=await getDoc(doc(this.classCollection(),id));if(!snapshot.exists()){const error=Error('학급을 찾을 수 없어요.');error.code='class-not-found';throw error;}return{id:snapshot.id,...snapshot.data()};}
  canCreateClass(){return this.mode==='local'||(!!this.user?.email&&!this.user.isAnonymous&&this.user.emailVerified===true&&(this.isAdmin===true||this.role==='teacher'));}
- async addClass(name,capacity=MAX_CAPACITY){name=name.trim();assertCapacity(capacity);if(!name||name.length>40)throw Error('학급 이름을 40자 이내로 입력해 주세요.');if(!this.canCreateClass())throw Error('계정을 만들고 이메일 인증을 완료하면 내 학급을 개설할 수 있어요.');const item={id:crypto.randomUUID(),name,capacity,createdAt:Date.now(),teacherEmail:this.user?.email?.toLowerCase()||'',accepting:true,autoPublish:false};if(this.mode==='local')await this.write('classes',item);else{const{id,...data}=item;await setDoc(doc(this.classCollection(),id),data);}return item;}
+ async addClass(name,capacity=MAX_CAPACITY){name=name.trim();assertCapacity(capacity);if(!name||name.length>40)throw Error('학급 이름을 40자 이내로 입력해 주세요.');if(!this.canCreateClass())throw Error('계정을 만들고 이메일 인증을 완료하면 내 학급을 개설할 수 있어요.');const themeId=chooseClassTheme(await this.classes());const item={id:crypto.randomUUID(),name,capacity,themeId,createdAt:Date.now(),teacherEmail:this.user?.email?.toLowerCase()||'',accepting:true,autoPublish:false};if(this.mode==='local')await this.write('classes',item);else{const{id,...data}=item;await setDoc(doc(this.classCollection(),id),data);}return item;}
  async books(classId,{covers=true}={}){
  const books=this.mode==='local'?(await this.all('books')).filter(b=>b.classId===classId).map(b=>({...b})):(await getDocs(this.bookCollection(classId))).docs.map(d=>({...d.data(),id:d.id,classId}));
  books.sort((a,b)=>a.slot-b.slot);if(covers)await this.loadCovers(books);return books;

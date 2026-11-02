@@ -7,7 +7,7 @@ service cloud.firestore {
   function manages(s,c){return verified() && (get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.teacherEmail==request.auth.token.email || admin(s));}
   function capacity(s,c){return get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.get('capacity',30);}
   function deleting(s,c){return get(/databases/$(database)/documents/schools/$(s)/classes/$(c)).data.get('deleting',false);}
-  function validClass(){let d=request.resource.data;let limit=d.get('capacity',30);let removing=d.get('deleting',false);return d.keys().hasOnly(['name','createdAt','teacherEmail','accepting','autoPublish','capacity','deleting']) && d.name is string && d.name.size()>0 && d.name.size()<=40 && d.createdAt is number && d.teacherEmail is string && d.accepting is bool && d.autoPublish is bool && limit is int && limit>=1 && limit<=30 && removing is bool && (!removing || d.accepting==false);}
+  function validClass(){let d=request.resource.data;let limit=d.get('capacity',30);let removing=d.get('deleting',false);return d.keys().hasOnly(['name','createdAt','teacherEmail','accepting','autoPublish','capacity','deleting','themeId']) && d.get('themeId','') is string && (d.get('themeId','')=='' || d.themeId.matches('^(spring|summer|autumn|tropical)-[0-2]$')) && d.name is string && d.name.size()>0 && d.name.size()<=40 && d.createdAt is number && d.teacherEmail is string && d.accepting is bool && d.autoPublish is bool && limit is int && limit>=1 && limit<=30 && removing is bool && (!removing || d.accepting==false);}
   function video(d){return d.get('kind','pdf')=='video';}
   function validBook(d){return d.get('youtubeUrl','') is string && (d.get('youtubeUrl','')=='' || d.youtubeUrl.matches('^https://www[.]youtube[.]com/watch[?]v=[A-Za-z0-9_-]{11}$')) && d.title is string && d.title.size()>0 && d.title.size()<=100 && d.author is string && d.author.size()>0 && d.author.size()<=50 && d.createdAt is number && ((video(d) && d.youtubeUrl!='' && d.keys().hasOnly(['kind','slot','title','author','youtubeUrl','createdAt'])) || (d.get('kind','pdf')=='pdf' && d.pages is int && d.pages>0 && d.bytes is int && d.bytes>0 && d.bytes<=104857600));}
   match /schools/{s}/members/{email}{
@@ -19,7 +19,7 @@ service cloud.firestore {
   match /schools/{s}/classes/{c}{
    allow read: if true;
    allow create: if validClass() && request.resource.data.get('deleting',false)==false && ((verified() && request.resource.data.teacherEmail==request.auth.token.email) || admin(s));
-   allow update: if validClass() && (resource.data.get('deleting',false)==false || (request.resource.data.get('deleting',false)==true && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleting','accepting']))) && (admin(s) || (manages(s,c) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','accepting','autoPublish','capacity','deleting'])));
+   allow update: if validClass() && request.resource.data.get('themeId','')==resource.data.get('themeId','') && (resource.data.get('deleting',false)==false || (request.resource.data.get('deleting',false)==true && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleting','accepting']))) && (admin(s) || (manages(s,c) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','accepting','autoPublish','capacity','deleting'])));
    allow delete: if manages(s,c) && resource.data.get('deleting',false)==true;
    match /books/{slot}{
     allow read: if true;

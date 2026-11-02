@@ -14,7 +14,11 @@ const variants=[
 ];
 export const themes=baseThemes.flatMap((base,baseIndex)=>variants[baseIndex].map((variant,index)=>({...base,...variant,id:base.kind+'-'+index,variant:index,baseName:base.name,patternRepeat:[[5,9],[4,7],[6,11]][index]})));
 export function classSeed(c){let hash=2166136261;for(const ch of c?.id||c?.name||'이야기숲')hash=Math.imul(hash^ch.codePointAt(0),16777619)>>>0;return hash;}
-export function classTheme(c){if(!c)return themes[0];const seed=classSeed(c);return themes[(seed%4)*3+Math.floor(seed/4)%3];}
+export function classTheme(c){if(!c)return themes[0];const saved=themes.find(t=>t.id===c.themeId);if(saved)return saved;const seed=classSeed(c);return themes[(seed%4)*3+Math.floor(seed/4)%3];}
+export function chooseClassTheme(classes,random=Math.random){
+ const counts=new Map(themes.map(t=>[t.id,0])),families=new Map(baseThemes.map(t=>[t.kind,0]));for(const cls of classes.filter(c=>!c.deleting)){const theme=classTheme(cls);counts.set(theme.id,counts.get(theme.id)+1);families.set(theme.kind,families.get(theme.kind)+1);}
+ const min=Math.min(...families.values()),familyOptions=baseThemes.filter(t=>families.get(t.kind)===min),family=familyOptions[Math.floor(random()*familyOptions.length)].kind;const options=themes.filter(t=>t.kind===family),least=Math.min(...options.map(t=>counts.get(t.id))),available=options.filter(t=>counts.get(t.id)===least);return available[Math.floor(random()*available.length)].id;
+}
 export function classStyle(c){const seed=classSeed(c),theme=classTheme(c);return{...theme,seed,frameStyle:theme.variant,patternTurn:theme.variant*.17,crownScale:[1,.94,1.08][theme.variant]};}
 function disposeDecor(group){const geometries=new Set(),materials=new Set(),textures=new Set();group?.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[]){materials.add(m);if(m.map)textures.add(m.map);}});textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose());}
 function leafShape(){const shape=new THREE.Shape();shape.moveTo(0,-.25);shape.bezierCurveTo(-.25,-.08,-.19,.15,0,.29);shape.bezierCurveTo(.19,.15,.25,-.08,0,-.25);return shape;}
@@ -78,7 +82,7 @@ function addCeilingDecor(g,group,t){
  }
 }
 export function applyClassTheme(g,c){
- if(!g.renderer)return;const t=classStyle(c),key=`${c?.id||''}:${c?.name||''}:${t.seed}`;g.theme=t;if(g.themeKey===key)return;g.themeKey=key;
+ if(!g.renderer)return;const t=classStyle(c),key=`${c?.id||''}:${c?.name||''}:${t.id}:${t.seed}`;g.theme=t;if(g.themeKey===key)return;g.themeKey=key;
  const e=g.environment;e.wall.color.set(t.wall);e.ceiling.color.set(t.ceiling);e.gold.color.set(t.accent);e.wood.color.set(t.wood);e.carpets.forEach(m=>m.color.set(t.carpet));e.lights.forEach(l=>l.color.set(t.light));e.fill.color.set(t.fill);
  e.ceiling.map?.dispose();e.ceiling.map=ceilingTexture(g,t);e.ceiling.needsUpdate=true;
  g.scene.background.set('#8d9e94');g.scene.fog.color.set('#a9b2a3');g.scene.fog.near=55;g.scene.fog.far=130;g.fireflies.material.color.set(t.accent);e.leaves.visible=true;e.leaves.material.color.set(t.plants[0]);
@@ -93,9 +97,9 @@ export function applyClassTheme(g,c){
 }
 export function buildExhibitFrame(g,group,occupied){
  const t=g.theme||classStyle(null);group.name='exhibit-frame';group.userData.theme=t.kind;group.userData.frameStyle=t.frameStyle;const trim=g.material(t.accent,{metalness:.35,roughness:.45}),wood=g.material(t.wood);
- g.box(2.18,3.3,.12,0,2.12,-.05,g.material(occupied?t.pale:t.frame),group);for(const x of [-1.08,1.08])g.box(.07,3.4,.22,x,2.12,0,trim,group);g.box(2.32,.16,.65,0,.42,.12,wood,group);g.box(2.2,.065,.24,0,3.8,.03,trim,group);
- if(t.frameStyle===0){const points=[];for(let i=0;i<=16;i++){const a=i*Math.PI/16;points.push(new THREE.Vector3(Math.cos(a)*1.08,3.8+Math.sin(a)*.4,.02));}group.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),20,.055,6,false),trim));}
- else if(t.frameStyle===1){for(const side of [-1,1]){const bar=g.box(1.2,.09,.2,side*.52,4,.02,wood,group);bar.rotation.z=-side*.36;}}
+ g.box(2.18,3.3,.12,0,2.12,-.05,g.material(occupied?({spring:'#eee2dc',summer:'#dbe7d2',autumn:'#f0dfbe',tropical:'#d0e2d5'}[t.kind]):t.frame),group);for(const x of [-1.08,1.08])g.box(.07,3.4,.22,x,2.12,0,trim,group);g.box(2.32,.16,.65,0,.42,.12,wood,group);g.box(2.2,.065,.24,0,3.8,.03,trim,group);
+ if(t.kind==='spring'||t.kind==='tropical'){const points=[];for(let i=0;i<=16;i++){const a=i*Math.PI/16;points.push(new THREE.Vector3(Math.cos(a)*1.08,3.8+Math.sin(a)*(t.kind==='spring'?.4:.22),.02));}group.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),20,.055,6,false),trim));}
+ else if(t.kind==='autumn'){for(const side of [-1,1]){const bar=g.box(1.2,.09,.2,side*.52,4,.02,wood,group);bar.rotation.z=-side*.36;}}
  else for(const x of [-.94,.94]){const cap=new THREE.Mesh(new THREE.SphereGeometry(.14,8,6),trim);cap.position.set(x,3.96,.03);group.add(cap);}
  let geometry;if(t.treeShape==='maple')geometry=new THREE.ShapeGeometry(mapleShape());else if(t.treeShape==='ginkgo')geometry=new THREE.CircleGeometry(.2,12,.15,Math.PI-.3);else geometry=new THREE.ShapeGeometry(leafShape());const icon=new THREE.Mesh(geometry,g.material(t.plants[1],{side:THREE.DoubleSide}));icon.scale.set(.65,.65,1);icon.position.set(0,4.05,.1);icon.name='frame-theme-crest';icon.userData.motif='leaf';group.add(icon);
 }
