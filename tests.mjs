@@ -3,7 +3,7 @@ import {slotPosition,canStand} from './src/gallery.js';
 import {LibraryStore,assertSlot} from './src/store.js';
 import * as THREE from 'three';
 import {Gallery} from './src/gallery.js';
-import {classTheme, classStyle, baseThemes, themes, chooseClassTheme} from './src/themes.js';
+import {classTheme, classStyle, baseThemes, themes, chooseClassTheme, welcomePalette} from './src/themes.js';
 import {classCapacity,assertCapacity,availableSlots,exhibitedBooks} from './src/capacity.js';
 assert.equal(canStand(0,16.5),false);
 assert.equal(canStand(2.5,16.5),true);
@@ -12,9 +12,12 @@ const gallery=Object.create(Gallery.prototype);
 gallery.scene=new THREE.Scene();gallery.renderer={shadowMap:{}};gallery.texture=()=>new THREE.Texture();gallery.buildRoom();
 const columns=gallery.scene.children.filter(o=>['portal-column','portal-base'].includes(o.name));assert.equal(columns.length,12);gallery.scene.updateMatrixWorld(true);for(const column of columns){const box=new THREE.Box3().setFromObject(column);assert.ok(box.min.x>9||box.max.x< -9,'columns and bases must be behind displays and outside the aisle');}const roomObjects=gallery.scene.children.length;
 const seen=new Set();
+const luminance=hex=>{const c=new THREE.Color(hex);return .2126*c.r+.7152*c.g+.0722*c.b;};
+for(const theme of themes){const palette=welcomePalette(theme);assert.ok((luminance(palette.background)+.05)/(luminance(palette.ink)+.05)>=7,'welcome sign text must have at least 7:1 contrast in every theme');}
 for(let i=1;i<=40;i++){
  const cls={id:`class-${i}`,name:`3학년 ${i}반`};gallery.setClass(cls);
  seen.add(classTheme(cls).id);
+ const ceilingCanopy=gallery.classDecor.getObjectByName('forest-ceiling-canopy');assert.ok(ceilingCanopy?.isInstancedMesh,'ceiling foliage should use a shared instanced draw');gallery.scene.updateMatrixWorld(true);assert.ok(new THREE.Box3().setFromObject(ceilingCanopy).min.y>4.5,'ceiling foliage must remain clear of visitors and displays');
  assert.equal(gallery.scene.children.length,roomObjects+1,'old classroom decorations must be removed');
  assert.equal(gallery.environment.wall.color.getHexString(),classTheme(cls).wall.slice(1));assert.equal(gallery.environment.ceiling.color.getHexString(),classTheme(cls).ceiling.slice(1));assert.equal(gallery.environment.ceiling.map.userData.pattern,classTheme(cls).kind);assert.equal(gallery.environment.ceiling.map.userData.variant,classTheme(cls).variant);assert.equal(gallery.scene.getObjectByName('library-vault').geometry.attributes.uv.count,gallery.scene.getObjectByName('library-vault').geometry.attributes.position.count);assert.ok(gallery.scene.getObjectByName('library-vault'));assert.ok(gallery.scene.getObjectByName('library-left-wall'));assert.ok(gallery.scene.getObjectByName('library-right-wall'));for(const name of ['library-floor','library-vault','library-left-wall','library-right-wall'])assert.equal(gallery.scene.getObjectByName(name).frustumCulled,false,'the enclosing room must remain visible');
  assert.equal(gallery.classDecor.children.filter(o=>o.material?.map).length,2,'sign is readable from both sides');
