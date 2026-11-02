@@ -24,7 +24,7 @@ document.querySelectorAll('[data-zone]').forEach(b=>b.onclick=()=>{gallery.zone(
 $('#readNear').onclick=()=>gallery.near&&read(gallery.near);$('#helpBtn').onclick=()=>openDialog('#help');$('#catalogBtn').onclick=$('#fallbackCatalog').onclick=()=>{renderCatalog();openDialog('#catalog');};$('#search').oninput=renderCatalog;
 $('#classesBtn').onclick=async()=>{renderClasses();openDialog('#classesDialog');if(!preview){try{classes=await store.classes();classesLoaded=true;entryError='';renderClasses();}catch(e){status('#classesStatus',friendly(e),true);}}};$('#manageBtn').onclick=openTeacherHome;
 function showLobby(show){const lobby=$('#entryLobby');if(show&&document.querySelector('dialog[open]:not(#entryLobby)'))return;lobby.hidden=!show;if(show){gallery?.pause();if(!lobby.open)lobby.showModal();}else if(lobby.open)lobby.close();document.body.classList.toggle('choosing-class',show);for(const node of document.querySelectorAll('body > header,body > main,body > footer'))node.inert=show;}
-function returnToLobby(){for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();gallery?.reset();renderLobby();showLobby(true);}
+function returnToLobby(){creationIntent=false;for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();gallery?.reset();renderLobby();showLobby(true);}
 function enterExhibition(){if(!current)return;showLobby(false);walking();gallery.active=true;$('#sceneHost').focus({preventScroll:true});}
 function listedClasses(){return classes.filter(c=>!c.deleting||store.manages(c)).sort((a,b)=>a.name.localeCompare(b.name,'ko',{numeric:true}));}
 function managedClasses(){return listedClasses().filter(c=>store.manages(c));}
@@ -125,7 +125,7 @@ async function authChanged(){
  const g=++authLoading;preview=false;try{const next=await store.classes();if(g!==authLoading)return;classes=next;classesLoaded=true;entryError='';
  const key=store.user&&!store.user.isAnonymous&&store.canCreateClass()?store.user.email||'local':'',entered=!!key&&key!==teacherSessionKey,mine=managedClasses();let choice=classes.find(c=>c.id===current?.id);if(entered){managedChoice=null;if(mine.length===1)choice=mine[0];}
  if(choice)await selectClass(choice);else{++loading;stopWatch();current=null;books=[];gallery.setClass(null);gallery.setBooks([]);$('#className').textContent=classes.length?'학급을 선택해 주세요':'학급을 개설해 주세요';$('#bookCount').textContent='0';$('#capacity').textContent='학급 도서관을 선택해 주세요';showLobby(true);}if(g!==authLoading)return;
- teacherSessionKey=key;renderClasses();renderManager();if(key&&(entered||creationIntent)){creationIntent=false;$('#classesDialog').close();if(current)showLobby(false);renderManager();openDialog('#manager');$('#manager .parchment-content').scrollTop=0;}
+ teacherSessionKey=key;renderClasses();renderManager();if(key&&(creationIntent||(entered&&$('#manager').open))){creationIntent=false;$('#classesDialog').close();if(current)showLobby(false);renderManager();openDialog('#manager');$('#manager .parchment-content').scrollTop=0;}
  }catch(e){entryError='학급 도서관을 불러오지 못했어요. '+friendly(e);renderLobby();toast(friendly(e));renderManager();}
 }
 showLobby(true);renderClasses();try{await store.init(authChanged);if(store.mode==='local'){preview=false;await authChanged();}else renderManager();}catch(e){entryError='학급 도서관에 연결하지 못했어요. '+friendly(e);renderLobby();$('#saveState').textContent='연결 오류';$('#storageNote').textContent='공유 저장소에 연결하지 못했습니다. 새로고침 후 다시 시도해 주세요.';}

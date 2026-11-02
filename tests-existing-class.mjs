@@ -31,7 +31,7 @@ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 try{
  const returnHome=await new AsyncFunction('LibraryStore','Gallery','Reader','inspectPDF','setupManagement','classCapacity','availableSlots','exhibitedBooks','showBookSuccess','youtubeLink','videoAction','prepareBook','openVideo',source+'\nreturn returnToLobby;')(TestStore,TestGallery,TestReader,()=>{},setupManagement,classCapacity,availableSlots,exhibitedBooks,showBookSuccess,youtubeLink,videoAction,prepareBook,openVideo);
  const $=s=>document.querySelector(s),tick=()=>new Promise(resolve=>setTimeout(resolve,0));
- assert.equal($('#manager').open,true,'an authenticated manager lands on management');assert.equal($('#managedClassSelect').value,'existing');assert.equal($('#bookCount').textContent,'30');
+ assert.equal($('#manager').open,false,'restored login must not open management');assert.equal($('#entryLobby').open,true,'refresh starts on the home screen');assert.equal($('#managedClassSelect').value,'existing');assert.equal($('#bookCount').textContent,'30');
  $('#manageBtn').click();await tick();
  assert.equal($('#bookCount').textContent,'30');assert.equal(document.querySelectorAll('.book-tile').length,30);
  $('#classPolicy input[type=number]').value='20';await $('#classPolicy button').onclick();await tick();
